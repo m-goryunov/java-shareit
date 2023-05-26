@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
 import javax.validation.Valid;
@@ -21,21 +22,21 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping(value = "/users")
-    User createUser(@Valid @RequestBody User user) {
-        log.info("Запрос создания пользователя с id: {}", user.getId());
-        return userService.createUser(user);
+    UserDto createUser(@Valid @RequestBody UserDto userDto) {
+        log.info("Запрос создания пользователя с id: {}", userDto.getId());
+        return userService.createUser(userDto);
     }
 
     @GetMapping("/{id}")
-    User getUserById(@PathVariable long id) {
+    UserDto getUserById(@PathVariable long id) {
         log.info("Запрос пользователя с id: {}", id);
         return userService.getUserById(id);
     }
 
     @PatchMapping
-    User updateUser(@Valid @RequestBody User user) {
-        log.info("Запрос обновления пользователя с id: {}", user.getId());
-        return userService.updateUser(user);
+    UserDto updateUser(@Valid @RequestBody UserDto userDto) {
+        log.info("Запрос обновления пользователя с id: {}", userDto.getId());
+        return userService.updateUser(userDto);
     }
 
     @DeleteMapping("/{id}")
