@@ -32,7 +32,7 @@ public class ItemRepositoryInMemory implements ItemRepository {
 
     @Override
     public Optional<Item> getItemById(Long itemId) {
-        return Optional.ofNullable(items.get(id));
+        return Optional.ofNullable(items.get(itemId));
     }
 
     @Override

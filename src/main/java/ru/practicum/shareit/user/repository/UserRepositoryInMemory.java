@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,14 +30,14 @@ public class UserRepositoryInMemory implements UserRepository {
     }
 
     @Override
-    public User updateUser(User user) {
-        if (users.containsKey(user.getId()) || !isEmailExists(user.getEmail())) {
-            users.put(user.getId(), user);
-            log.info("Пользователь обновлён.{}", user.getId());
+    public User updateUser(User user, Long userId) {
+        if (users.containsKey(userId) || !isEmailExists(user.getEmail())) {
+            users.put(userId, user);
+            log.info("Пользователь обновлён.{}", userId);
         } else {
             throw new IllegalArgumentException("Обновление несуществующего пользователя.");
         }
-        return user;
+        return users.get(userId);
     }
 
     @Override
@@ -48,5 +49,10 @@ public class UserRepositoryInMemory implements UserRepository {
     @Override
     public boolean isEmailExists(String email) {
         return users.values().stream().map(User::getEmail).anyMatch(email::equals);
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return List.copyOf(users.values());
     }
 }

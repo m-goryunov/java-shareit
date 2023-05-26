@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
@@ -37,7 +38,7 @@ public class ItemServiceImpl implements ItemService {
                 .orElseThrow(() -> new NoSuchElementException("Вещь не найдена."));
 
         if (!Objects.equals(item.getOwner().getId(), userId)) {
-            throw new IllegalArgumentException("Не совпадают владельцы вещей.");
+            throw new EntityNotFoundException("Не совпадают владельцы вещей.", getClass().toString());
         }
 
         if (StringUtils.hasLength(itemDto.getName())) {
