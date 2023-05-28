@@ -37,16 +37,16 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.getUserById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь для обновления не найден.", getClass().toString()));
 
-        if (userDto.getEmail() != null && !Objects.equals(userDto.getEmail(), user.getEmail())) {
+        if (userDto.getEmail() != null && !userDto.getEmail().isEmpty() && !Objects.equals(userDto.getEmail(), user.getEmail())) {
             isEmailExists(userDto.getEmail());
             user.setEmail(userDto.getEmail());
         }
 
-        if (userDto.getName() != null) {
+        if (userDto.getName() != null && !userDto.getName().isBlank()) {
             user.setName(userDto.getName());
         }
 
-        return UserMapper.toUserDto(userRepository.updateUser(user, userId));
+        return UserMapper.toUserDto(user);
     }
 
     @Override

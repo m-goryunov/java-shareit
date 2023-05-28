@@ -6,13 +6,12 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.util.Create;
+import ru.practicum.shareit.util.Update;
 
 import javax.validation.Valid;
 import java.util.List;
 
-/**
- * TODO Sprint add-controllers.
- */
 @RestController
 @RequiredArgsConstructor
 @Validated
@@ -23,6 +22,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
+    @Validated(Create.class)
     UserDto createUser(@Valid @RequestBody UserDto userDto) {
         log.info("Запрос создания пользователя.");
         return userService.createUser(userDto);
@@ -41,7 +41,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    UserDto updateUser(@RequestBody UserDto userDto, @PathVariable Long id) {
+    UserDto updateUser(@Validated(Update.class) @RequestBody UserDto userDto, @PathVariable Long id) {
         log.info("Запрос обновления пользователя с id: {}", id);
         return userService.updateUser(userDto, id);
     }

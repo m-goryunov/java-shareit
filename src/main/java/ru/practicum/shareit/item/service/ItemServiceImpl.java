@@ -8,9 +8,8 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
-import ru.practicum.shareit.user.dto.UserMapper;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -21,12 +20,13 @@ import java.util.Objects;
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
-    private final UserService userService;
+    private final UserRepository userRepository;
 
 
     @Override
     public ItemDto createItem(ItemDto itemDto, Long userId) {
-        User user = UserMapper.fromUserDto(userService.getUserById(userId));
+        User user = userRepository.getUserById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
         Item item = ItemMapper.fromItemDto(itemDto);
         item.setOwner(user);
         return ItemMapper.toItemDto(itemRepository.createItem(item));
@@ -41,11 +41,11 @@ public class ItemServiceImpl implements ItemService {
             throw new EntityNotFoundException("Не совпадают владельцы вещей.", getClass().toString());
         }
 
-        if (StringUtils.hasLength(itemDto.getName())) {
+        if (StringUtils.hasText(itemDto.getName())) {
             item.setName(itemDto.getName());
         }
 
-        if (StringUtils.hasLength(itemDto.getDescription())) {
+        if (StringUtils.hasText(itemDto.getDescription())) {
             item.setDescription(itemDto.getDescription());
         }
 
@@ -53,7 +53,6 @@ public class ItemServiceImpl implements ItemService {
             item.setAvailable(itemDto.getAvailable());
         }
 
-        itemRepository.updateItemById(item);
         return ItemMapper.toItemDto(item);
     }
 
