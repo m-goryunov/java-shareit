@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.practicum.shareit.exception.EntityNotFoundException;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
@@ -24,16 +22,15 @@ public class ItemServiceImpl implements ItemService {
 
 
     @Override
-    public ItemDto createItem(ItemDto itemDto, Long userId) {
+    public Item createItem(Item item, Long userId) {
         User user = userRepository.getUserById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
-        Item item = ItemMapper.fromItemDto(itemDto);
         item.setOwner(user);
-        return ItemMapper.toItemDto(itemRepository.createItem(item));
+        return itemRepository.createItem(item);
     }
 
     @Override
-    public ItemDto updateItemById(ItemDto itemDto, Long itemId, Long userId) {
+    public Item updateItemById(Item itemDto, Long itemId, Long userId) {
         Item item = itemRepository.getItemById(itemId)
                 .orElseThrow(() -> new NoSuchElementException("Вещь не найдена."));
 
@@ -53,27 +50,25 @@ public class ItemServiceImpl implements ItemService {
             item.setAvailable(itemDto.getAvailable());
         }
 
-        return ItemMapper.toItemDto(item);
+        return item;
     }
 
     @Override
-    public ItemDto getItemById(Long itemId) {
-        Item item = itemRepository.getItemById(itemId)
+    public Item getItemById(Long itemId) {
+        return itemRepository.getItemById(itemId)
                 .orElseThrow(() -> new NoSuchElementException("Вещь не найдена."));
-        return ItemMapper.toItemDto(item);
     }
 
     @Override
-    public List<ItemDto> getAllItemsByUserId(Long userId) {
-        List<Item> items = itemRepository.getAllItemsByUserId(userId);
-        return ItemMapper.toItemDto(items);
+    public List<Item> getAllItemsByUserId(Long userId) {
+        return itemRepository.getAllItemsByUserId(userId);
     }
 
     @Override
-    public List<ItemDto> searchItem(String text) {
+    public List<Item> searchItem(String text) {
         if (!StringUtils.hasLength(text)) {
             return List.of();
         }
-        return ItemMapper.toItemDto(itemRepository.searchItem(text));
+        return itemRepository.searchItem(text);
     }
 }

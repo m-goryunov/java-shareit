@@ -3,8 +3,6 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.EntityNotFoundException;
-import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.dto.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -18,35 +16,32 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDto createUser(UserDto userDto) {
-        if (userRepository.isEmailExists(userDto.getEmail())) {
-            throw new IllegalArgumentException("Пользователь с указанным email уже существует.");
-        }
-        User user = UserMapper.fromUserDto(userDto);
-        return UserMapper.toUserDto(userRepository.createUser(user));
+    public User createUser(User user) {
+        isEmailExists(user.getEmail());
+        return userRepository.createUser(user);
     }
 
     @Override
-    public UserDto getUserById(long id) {
-        return UserMapper.toUserDto(userRepository.getUserById(id).orElseThrow(()
-                -> new EntityNotFoundException("Пользователь не найден.", getClass().toString())));
+    public User getUserById(long id) {
+        return userRepository.getUserById(id).orElseThrow(()
+                -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
     }
 
     @Override
-    public UserDto updateUser(UserDto userDto, Long userId) {
-        User user = userRepository.getUserById(userId)
+    public User updateUser(User user, Long userId) {
+        User existUser = userRepository.getUserById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь для обновления не найден.", getClass().toString()));
 
-        if (userDto.getEmail() != null && !userDto.getEmail().isEmpty() && !Objects.equals(userDto.getEmail(), user.getEmail())) {
-            isEmailExists(userDto.getEmail());
-            user.setEmail(userDto.getEmail());
+        if (user.getEmail() != null && !user.getEmail().isEmpty() && !Objects.equals(existUser.getEmail(), user.getEmail())) {
+            isEmailExists(user.getEmail());
+            existUser.setEmail(user.getEmail());
         }
 
-        if (userDto.getName() != null && !userDto.getName().isBlank()) {
-            user.setName(userDto.getName());
+        if (user.getName() != null && !user.getName().isEmpty()) {
+            existUser.setName(user.getName());
         }
 
-        return UserMapper.toUserDto(user);
+        return existUser;
     }
 
     @Override
@@ -55,8 +50,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUsers() {
-        return UserMapper.toUserDto(userRepository.getAllUsers());
+    public List<User> getAllUsers() {
+        return userRepository.getAllUsers();
     }
 
     private void isEmailExists(String email) {
