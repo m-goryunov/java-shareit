@@ -37,7 +37,7 @@ public class UserServiceImpl implements UserService {
             existUser.setEmail(user.getEmail());
         }
 
-        if (user.getName() != null && !user.getName().isEmpty()) {
+        if (user.getName() != null && !user.getName().isBlank()) {
             existUser.setName(user.getName());
         }
 

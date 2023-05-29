@@ -11,12 +11,10 @@ import ru.practicum.shareit.user.service.UserService;
 import ru.practicum.shareit.util.Create;
 import ru.practicum.shareit.util.Update;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Validated
 @Slf4j
 @RequestMapping(path = "/users")
 public class UserController {
@@ -24,8 +22,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    @Validated(Create.class)
-    UserDto createUser(@Valid @RequestBody UserDto userDto) {
+    UserDto createUser(@Validated(Create.class) @RequestBody UserDto userDto) {
         log.info("Запрос создания пользователя.");
         User user = UserMapper.fromUserDto(userDto);
         return UserMapper.toUserDto(userService.createUser(user));
@@ -44,8 +41,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    @Validated(Update.class)
-    UserDto updateUser(@Valid @RequestBody UserDto userDto, @PathVariable Long id) {
+    UserDto updateUser(@Validated(Update.class) @RequestBody UserDto userDto, @PathVariable Long id) {
         log.info("Запрос обновления пользователя с id: {}", id);
         User user = UserMapper.fromUserDto(userDto);
         return UserMapper.toUserDto(userService.updateUser(user, id));
