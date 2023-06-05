@@ -21,6 +21,6 @@ public class Booking {
     @NotNull
     private Item item;
     @NotNull
-    private User user;
+    private User booker;
     private BookingStatus status;
 }
