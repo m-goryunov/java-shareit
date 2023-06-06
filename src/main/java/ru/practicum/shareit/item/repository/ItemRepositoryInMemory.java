@@ -1,7 +1,6 @@
 package ru.practicum.shareit.item.repository;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.HashMap;
@@ -10,13 +9,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Repository
 @Slf4j
-public class ItemRepositoryInMemory implements ItemRepository {
+public class ItemRepositoryInMemory {
     private final Map<Long, Item> items = new HashMap<>();
     private Long id = 0L;
 
-    @Override
+    
     public Item createItem(Item item) {
         item.setId(++id);
         items.put(item.getId(), item);
@@ -24,18 +22,18 @@ public class ItemRepositoryInMemory implements ItemRepository {
         return item;
     }
 
-    @Override
+    
     public void updateItemById(Item item) {
         items.put(item.getId(), item);
         log.info("Вещь обновлена {}", item.getId());
     }
 
-    @Override
+    
     public Optional<Item> getItemById(Long itemId) {
         return Optional.ofNullable(items.get(itemId));
     }
 
-    @Override
+    
     public List<Item> getAllItemsByUserId(Long userId) {
         return items.values()
                 .stream()
@@ -43,7 +41,7 @@ public class ItemRepositoryInMemory implements ItemRepository {
                 .collect(Collectors.toList());
     }
 
-    @Override
+    
     public List<Item> searchItem(String text) {
         log.info("Запуск поиска по тексту: {}", text);
         return items.values()
