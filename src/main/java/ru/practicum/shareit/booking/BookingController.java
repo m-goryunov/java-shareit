@@ -17,11 +17,11 @@ import ru.practicum.shareit.booking.service.BookingService;
 @Slf4j
 public class BookingController {
 
-    private final BookingService bookingService;
+    //private final BookingService bookingService;
 
     @PostMapping
     public BookingDto createBooking(BookingDto bookingDto) {
-        bookingService.createBooking(booking);
+        //bookingService.createBooking(booking);
         return bookingDto;
     }
 }

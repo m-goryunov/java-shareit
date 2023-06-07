@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "BOOKINGS")
 @Getter @Setter @ToString
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Booking {
     @Id
@@ -24,11 +25,9 @@ public class Booking {
     private LocalDateTime end;
     @OneToOne
     @JoinColumn(name = "ITEM_ID")
-    @NotNull
     private Item item;
     @ManyToOne
     @JoinColumn(name = "BOOKER_ID")
-    @NotNull
     private User booker;
     @Enumerated(value = EnumType.STRING)
     private BookingStatus status;
