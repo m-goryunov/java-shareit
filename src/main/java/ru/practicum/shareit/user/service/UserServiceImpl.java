@@ -18,18 +18,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public User createUser(User user) {
         isEmailExists(user.getEmail());
-        return userRepository.createUser(user);
+        return userRepository.save(user);
     }
 
     @Override
     public User getUserById(long id) {
-        return userRepository.getUserById(id).orElseThrow(()
+        return userRepository.findById(id).orElseThrow(()
                 -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
     }
 
     @Override
     public User updateUser(User user, Long userId) {
-        User existUser = userRepository.getUserById(userId)
+        User existUser = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь для обновления не найден.", getClass().toString()));
 
         if (user.getEmail() != null && !user.getEmail().isEmpty() && !Objects.equals(existUser.getEmail(), user.getEmail())) {
@@ -46,16 +46,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(long id) {
-        userRepository.deleteUser(id);
+        userRepository.deleteById(id);
     }
 
     @Override
     public List<User> getAllUsers() {
-        return userRepository.getAllUsers();
+        return userRepository.findAll();
     }
 
     private void isEmailExists(String email) {
-        if (userRepository.isEmailExists(email)) {
+        if (userRepository.findAll().stream().map(User::getEmail).anyMatch(email::equals)) {
             throw new IllegalArgumentException("Пользователь с указанным email уже существует.");
         }
     }

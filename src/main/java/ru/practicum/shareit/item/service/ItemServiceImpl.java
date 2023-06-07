@@ -12,6 +12,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,15 +24,15 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Item createItem(Item item, Long userId) {
-        User user = userRepository.getUserById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
         item.setOwner(user);
-        return itemRepository.createItem(item);
+        return itemRepository.save(item);
     }
 
     @Override
     public Item updateItemById(Item itemDto, Long itemId, Long userId) {
-        Item item = itemRepository.getItemById(itemId)
+        Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NoSuchElementException("Вещь не найдена."));
 
         if (!Objects.equals(item.getOwner().getId(), userId)) {
@@ -50,18 +51,20 @@ public class ItemServiceImpl implements ItemService {
             item.setAvailable(itemDto.getAvailable());
         }
 
-        return item;
+        return itemRepository.save(item);
     }
 
     @Override
     public Item getItemById(Long itemId) {
-        return itemRepository.getItemById(itemId)
+        return itemRepository.findById(itemId)
                 .orElseThrow(() -> new NoSuchElementException("Вещь не найдена."));
     }
 
     @Override
     public List<Item> getAllItemsByUserId(Long userId) {
-        return itemRepository.getAllItemsByUserId(userId);
+        return itemRepository.findAll().stream()
+                .filter(item -> item.getOwner().getId().equals(userId))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -69,6 +72,6 @@ public class ItemServiceImpl implements ItemService {
         if (!StringUtils.hasLength(text)) {
             return List.of();
         }
-        return itemRepository.searchItem(text);
+        return itemRepository.search(text);
     }
 }
