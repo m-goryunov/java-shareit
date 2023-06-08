@@ -16,8 +16,8 @@ public class BookingDto {
     private LocalDateTime start;
     private LocalDateTime end;
     @NotNull
-    private Item item;
+    private Long item;
     @NotNull
-    private User booker;
+    private Long booker;
     private BookingStatus status;
 }
