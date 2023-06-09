@@ -48,16 +48,17 @@ public class BookingController {
     }
 
     //Получение списка всех бронирований текущего пользователя.
+    //CURRENT PAST FUTURE WAITING REJECTED Бронирования должны возвращаться отсортированными по дате от более новых к более старым.
     @GetMapping(params = "state")
-    public List<BookingDto> getAllBookingsByUser(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
-                                                 @RequestParam(required = false, defaultValue = "ALL") Boolean state) {
-        //CURRENT PAST FUTURE WAITING REJECTED Бронирования должны возвращаться отсортированными по дате от более новых к более старым.
+    public List<BookingDto> getAllBookingsByUserAndState(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
+                                                 @RequestParam(required = false, defaultValue = "ALL") String state) {
+
     }
 
     //Получение списка бронирований для всех вещей текущего пользователя.
     @GetMapping(params = {"owner", "state"})
-    public List<BookingDto> getAllOwnedItemBookings(@RequestHeader(name = "X-Sharer-User-Id") Long userId, @RequestParam Long owner,
-                                                    @RequestParam(required = false, defaultValue = "ALL") Boolean state) {
+    public List<BookingDto> getAllOwnedItemBookingsByState(@RequestHeader(name = "X-Sharer-User-Id") Long userId, @RequestParam Long ownerId,
+                                                    @RequestParam(required = false, defaultValue = "ALL") String state) {
 
     }
 }

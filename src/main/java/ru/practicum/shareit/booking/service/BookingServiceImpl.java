@@ -5,8 +5,12 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.repository.BookingRepository;
 import ru.practicum.shareit.booking.util.BookingStatus;
+import ru.practicum.shareit.exception.EntityNotFoundException;
+import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -14,6 +18,7 @@ import java.util.NoSuchElementException;
 public class BookingServiceImpl implements BookingService {
 
     BookingRepository bookingRepository;
+    UserRepository userRepository;
 
     @Override
     public Booking createBooking(Booking booking) {
@@ -45,6 +50,25 @@ public class BookingServiceImpl implements BookingService {
         } else throw new IllegalArgumentException("Утвердить бронирование может только владелец вещи.");
 
         return booking;
+    }
+
+    @Override
+    public List<Booking> getAllBookingsByUserAndState(Long userId, String state) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
+
+        List<Booking> bookings = bookingRepository.findAllByBooker_IdOrderByStart(userId);
+
+        switch (state) {
+            case "ALL": {
+                return bookings;
+            } case ""
+        }
+    }
+
+    @Override
+    public List<Booking> getAllOwnedItemBookingsByState(Long userId, Long ownerId, String state) {
+        return null;
     }
 
 
