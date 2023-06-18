@@ -57,7 +57,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Item getItemById(Long itemId) {
         return itemRepository.findById(itemId)
-                .orElseThrow(() -> new NoSuchElementException("Вещь не найдена."));
+                .orElseThrow(() -> new EntityNotFoundException("Вещь не найдена.", getClass().toString()));
     }
 
     @Override

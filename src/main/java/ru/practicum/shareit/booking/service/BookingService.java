@@ -15,5 +15,5 @@ public interface BookingService {
 
     List<Booking> getAllBookingsByUserAndState(Long userId, String state);
 
-    List<Booking> getAllOwnedItemBookingsByState(Long userId, Long ownerId, String state);
+    List<Booking> getAllOwnedItemBookingsByState(Long userId, String state);
 }

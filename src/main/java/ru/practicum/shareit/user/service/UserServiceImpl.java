@@ -17,7 +17,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User createUser(User user) {
-        isEmailExists(user.getEmail());
         return userRepository.save(user);
     }
 
@@ -33,14 +32,13 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь для обновления не найден.", getClass().toString()));
 
         if (user.getEmail() != null && !user.getEmail().isEmpty() && !Objects.equals(existUser.getEmail(), user.getEmail())) {
-            isEmailExists(user.getEmail());
             existUser.setEmail(user.getEmail());
         }
 
         if (user.getName() != null && !user.getName().isBlank()) {
             existUser.setName(user.getName());
         }
-
+        userRepository.save(existUser);
         return existUser;
     }
 
@@ -54,9 +52,4 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll();
     }
 
-    private void isEmailExists(String email) {
-        if (userRepository.findAll().stream().map(User::getEmail).anyMatch(email::equals)) {
-            throw new IllegalArgumentException("Пользователь с указанным email уже существует.");
-        }
-    }
 }

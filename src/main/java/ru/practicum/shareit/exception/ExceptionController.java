@@ -1,6 +1,7 @@
 package ru.practicum.shareit.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -45,7 +46,16 @@ public class ExceptionController {
     public ErrorResponse handleConstraintViolationException(final ConstraintViolationException e) {
         log.error("Ошибка валидации: Email не должен быть пустым. Код 400 {}", e.getMessage(), e);
         return new ErrorResponse(
-                e.getMessage()
+                "Ошибка валидации: Email не должен быть пустым. Код 400 " + e.getMessage()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDataIntegrityViolationException(final DataIntegrityViolationException e) {
+        log.error("Ошибка валидации репозитория Код 409 {}", e.getMessage(), e);
+        return new ErrorResponse(
+                "Ошибка валидации репозитория Код 409 "
         );
     }
 
@@ -53,8 +63,6 @@ public class ExceptionController {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleThrowable(final Throwable e) {
         log.error("Произошла непредвиденная ошибка. Код 500 {}", e.getMessage(), e);
-        return new ErrorResponse(
-                "Произошла непредвиденная ошибка."
-        );
+        return new ErrorResponse("Произошла непредвиденная ошибка. Код 500 " + e.getMessage());
     }
 }
