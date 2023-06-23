@@ -3,17 +3,23 @@ package ru.practicum.shareit.booking.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.dto.BookingMapper;
+import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.repository.BookingRepository;
 import ru.practicum.shareit.booking.util.BookingState;
 import ru.practicum.shareit.booking.util.BookingStatus;
 import ru.practicum.shareit.exception.EntityNotFoundException;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -21,13 +27,28 @@ public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final ItemRepository itemRepository;
 
     @Override
-    public Booking createBooking(Booking booking) {
-        userRepository.findById(userId);
-        itemService.getItemById(bookingRequestDto.getItemId());
-        checkDates(booking.getStart(), booking.getEnd());
+    //@Transactional
+    public Booking createBooking(BookingRequestDto bookingRequestDto, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
+        Item item = itemRepository.findById(bookingRequestDto.getItemId()).orElseThrow();
+
+        if (!item.getAvailable()) {
+            throw new UnsupportedOperationException("Вещь недоступна для бронирования.");
+        }
+
+        checkDates(bookingRequestDto.getStart(), bookingRequestDto.getEnd());
+
+        if (Objects.equals(item.getOwner().getId(), userId))
+            throw new UnsupportedOperationException("Невозможно забронировать вещь у самого себя.");
+
+        Booking booking = BookingMapper.fromDto(bookingRequestDto);
+        booking.setBooker(user);
+        booking.setItem(item);
         booking.setStatus(BookingStatus.WAITING);
+
         return bookingRepository.save(booking);
     }
 
