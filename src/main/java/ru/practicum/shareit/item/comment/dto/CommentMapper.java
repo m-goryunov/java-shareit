@@ -7,14 +7,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CommentMapper {
-    public static Comment dtoToObject(CommentRequestDto commentDto) {
+    public static Comment toDto(CommentRequestDto commentDto) {
         return Comment.builder()
                 .text(commentDto.getText())
                 .created(LocalDateTime.now())
                 .build();
     }
 
-    public static CommentResponseDto dtoToObject(Comment comment) {
+    public static CommentResponseDto toDto(Comment comment) {
         return CommentResponseDto.builder()
                 .id(comment.getId())
                 .text(comment.getText())
@@ -23,9 +23,9 @@ public class CommentMapper {
                 .build();
     }
 
-    public static List<CommentResponseDto> objectsToDto(List<Comment> comments) {
+    public static List<CommentResponseDto> toDto(List<Comment> comments) {
         return comments.stream()
-                .map(CommentMapper::dtoToObject)
+                .map(CommentMapper::toDto)
                 .collect(Collectors.toList());
     }
 }

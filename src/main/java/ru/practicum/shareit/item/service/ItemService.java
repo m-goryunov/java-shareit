@@ -13,9 +13,9 @@ public interface ItemService {
 
     Item updateItemById(Item item, Long itemId, Long userId);
 
-    ItemResponseDto getItemById(Long itemId);
+    ItemResponseDto getItemById(Long itemId, Long userId);
 
-    List<Item> getAllItemsByUserId(Long userId);
+    List<ItemResponseDto> getAllItemsByUserId(Long userId);
 
     List<Item> searchItem(String text);
 

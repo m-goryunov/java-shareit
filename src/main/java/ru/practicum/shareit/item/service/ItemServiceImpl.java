@@ -6,11 +6,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.repository.BookingRepository;
+import ru.practicum.shareit.booking.util.BookingStatus;
 import ru.practicum.shareit.exception.EntityNotFoundException;
+import ru.practicum.shareit.exception.IncorrectRequestException;
 import ru.practicum.shareit.item.comment.Comment;
 import ru.practicum.shareit.item.comment.CommentRepository;
 import ru.practicum.shareit.item.comment.dto.CommentMapper;
 import ru.practicum.shareit.item.comment.dto.CommentRequestDto;
+import ru.practicum.shareit.item.comment.dto.CommentResponseDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.dto.ItemResponseDto;
 import ru.practicum.shareit.item.model.Item;
@@ -67,7 +70,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemResponseDto getItemById(Long itemId) {
+    public ItemResponseDto getItemById(Long itemId, Long userId) {
 
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Вещь не найдена.", getClass().toString()));
@@ -77,27 +80,45 @@ public class ItemServiceImpl implements ItemService {
         if (Objects.equals(userId, item.getOwner().getId())) {
             itemResponseDto.setNextBooking(
                     (bookingRepository
-                            .findNextBooking(itemId, userId, Status.APPROVED, LocalDateTime.now(),
+                            .findNextBooking(itemId, userId, BookingStatus.APPROVED, LocalDateTime.now(),
                                     PageRequest.of(0, 1)))
                             .get().findFirst().orElse(null));
 
             itemResponseDto.setLastBooking(
                     (bookingRepository
-                            .findLastBooking(itemId, userId, Status.APPROVED, LocalDateTime.now(),
+                            .findLastBooking(itemId, userId, BookingStatus.APPROVED, LocalDateTime.now(),
                                     PageRequest.of(0, 1)))
                             .get().findFirst().orElse(null));
         }
 
-        List<CommentResponse> comments = commentService.findAllByItemId(itemId);
+        List<CommentResponseDto> comments = CommentMapper.toDto(commentRepository.findAllByItemId(itemId));
         itemResponseDto.setComments(comments);
 
-        return
+        return itemResponseDto;
     }
 
     @Override
-    public List<Item> getAllItemsByUserId(Long userId) {
-        return itemRepository.findAll().stream()
-                .filter(item -> item.getOwner().getId().equals(userId))
+    public List<ItemResponseDto> getAllItemsByUserId(Long userId) {
+        userRepository.findById(userId).orElseThrow(
+                () -> new EntityNotFoundException("Пользователь не найден", getClass().toString()));
+
+        List<ItemResponseDto> response = ItemMapper.toItemDto(itemRepository.findAllByOwnerIdOrderByIdAsc(userId));
+
+        return response
+                .stream()
+                .peek(itemsDto -> {
+                    itemsDto.setNextBooking(
+                            (bookingRepository
+                                    .findNextBooking(itemsDto.getId(), userId, BookingStatus.APPROVED, LocalDateTime.now(),
+                                            PageRequest.of(0, 1)))
+                                    .get().findFirst().orElse(null));
+
+                    itemsDto.setLastBooking(
+                            (bookingRepository
+                                    .findLastBooking(itemsDto.getId(), userId, BookingStatus.APPROVED, LocalDateTime.now(),
+                                            PageRequest.of(0, 1)))
+                                    .get().findFirst().orElse(null));
+                })
                 .collect(Collectors.toList());
     }
 
@@ -110,13 +131,13 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    //@Transactional
     public Comment createComment(CommentRequestDto request, Long userId, Long itemId) {
-        Comment comment = CommentMapper.dtoToObject(request);
+        Comment comment = CommentMapper.toDto(request);
 
         User author = userRepository.findById(userId).orElseThrow();
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new EntityNotFoundException(String.format("Вещь не найдена: '%s' ", itemId), getClass().toString()));
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Вещь не найдена: '%s' ", itemId), getClass().toString()));
 
         List<Booking> bookings = bookingRepository.findByItemIdAndEndIsBefore(itemId, comment.getCreated())
                 .stream()
@@ -124,8 +145,8 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toList());
 
         if (bookings.isEmpty()) {
-            throw new IllegalArgumentException(String.format("Невозможно оставить отзыв пользователю: '%s'",
-                    userId));
+            throw new IncorrectRequestException(String.format("Невозможно оставить отзыв пользователю: '%s'",
+                    userId), getClass().toString());
         }
 
         comment.setAuthor(author);

@@ -43,6 +43,15 @@ public class ExceptionController {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleIncorrectRequestException(final IncorrectRequestException e) {
+        log.error("IncorrectRequestException. Код 400 {}", e.getMessage(), e);
+        return new ErrorResponse(
+                e.getMessage()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleConstraintViolationException(final ConstraintViolationException e) {
         log.error("Ошибка валидации: Email не должен быть пустым. Код 400 {}", e.getMessage(), e);
         return new ErrorResponse(

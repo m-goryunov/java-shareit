@@ -10,7 +10,9 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "COMMENTS")
-@Getter @Setter @ToString
+@Getter
+@Setter
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

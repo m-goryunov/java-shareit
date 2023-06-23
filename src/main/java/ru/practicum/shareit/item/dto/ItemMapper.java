@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ItemMapper {
-    public static ItemDto toItemDto(Item item) {
-        return ItemDto.builder()
+    public static ItemResponseDto toItemDto(Item item) {
+        return ItemResponseDto.builder()
                 .id(item.getId())
                 .name(item.getName())
                 .description(item.getDescription())
@@ -15,14 +15,13 @@ public class ItemMapper {
                 .build();
     }
 
-    public static List<ItemDto> toItemDto(List<Item> items) {
+    public static List<ItemResponseDto> toItemDto(List<Item> items) {
         return items.stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
-    public static Item fromItemDto(ItemDto itemDto) {
-
+    public static Item fromItemDto(ItemRequestDto itemDto) {
         return Item.builder()
                 .name(itemDto.getName())
                 .description(itemDto.getDescription())

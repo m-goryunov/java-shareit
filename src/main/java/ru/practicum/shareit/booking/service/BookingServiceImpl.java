@@ -10,6 +10,7 @@ import ru.practicum.shareit.booking.service.repository.BookingRepository;
 import ru.practicum.shareit.booking.util.BookingState;
 import ru.practicum.shareit.booking.util.BookingStatus;
 import ru.practicum.shareit.exception.EntityNotFoundException;
+import ru.practicum.shareit.exception.IncorrectRequestException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
@@ -18,7 +19,6 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 @Service
@@ -30,19 +30,20 @@ public class BookingServiceImpl implements BookingService {
     private final ItemRepository itemRepository;
 
     @Override
-    //@Transactional
     public Booking createBooking(BookingRequestDto bookingRequestDto, Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
-        Item item = itemRepository.findById(bookingRequestDto.getItemId()).orElseThrow();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
+        Item item = itemRepository.findById(bookingRequestDto.getItemId())
+                .orElseThrow(() -> new EntityNotFoundException("Вещь не найдена.", getClass().toString()));
 
         if (!item.getAvailable()) {
-            throw new UnsupportedOperationException("Вещь недоступна для бронирования.");
+            throw new IncorrectRequestException("Вещь недоступна для бронирования.", getClass().toString());
         }
 
         checkDates(bookingRequestDto.getStart(), bookingRequestDto.getEnd());
 
         if (Objects.equals(item.getOwner().getId(), userId))
-            throw new UnsupportedOperationException("Невозможно забронировать вещь у самого себя.");
+            throw new EntityNotFoundException("Невозможно забронировать вещь у самого себя.", getClass().toString());
 
         Booking booking = BookingMapper.fromDto(bookingRequestDto);
         booking.setBooker(user);
@@ -54,7 +55,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Booking getBookingById(Long id) {
-        return bookingRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Бронирование не найдено."));
+        return bookingRepository.findById(id).orElseThrow(() ->
+                new EntityNotFoundException("Бронирование не найдено.", getClass().toString()));
     }
 
     @Override
@@ -63,19 +65,28 @@ public class BookingServiceImpl implements BookingService {
         if (userId.equals(booking.getBooker().getId()) || userId.equals(booking.getItem().getOwner().getId())) {
             return booking;
         } else
-            throw new IllegalArgumentException("Просмотреть бронирование может только владелец вещи и/или арендатор");
+            throw new EntityNotFoundException("Просмотреть бронирование может только владелец вещи и/или арендатор",
+                    getClass().toString());
     }
 
     @Override
     public Booking acceptOrRejectBooking(Long userId, Long bookingId, Boolean approved) {
-        Booking booking = getBookingById(bookingId);
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException("Бронирование не найдено.", getClass().toString()));
 
-        if (userId.equals(booking.getItem().getOwner().getId())) {
-            if (approved) booking.setStatus(BookingStatus.APPROVED);
-            if (!approved) booking.setStatus(BookingStatus.REJECTED);
-        } else throw new IllegalArgumentException("Утвердить бронирование может только владелец вещи.");
+        if (!Objects.equals(booking.getItem().getOwner().getId(), userId))
+            throw new EntityNotFoundException("Нельзя забронировать у самого себя.", getClass().toString());
 
-        return booking;
+        if (!booking.getStatus().equals(BookingStatus.WAITING))
+            throw new IncorrectRequestException("Статус должен быть WAITING.", getClass().toString());
+
+        if (approved) {
+            booking.setStatus(BookingStatus.APPROVED);
+        } else {
+            booking.setStatus(BookingStatus.REJECTED);
+        }
+
+        return bookingRepository.save(booking);
     }
 
     @Override
@@ -84,7 +95,8 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
 
         BookingState bookingState = BookingState.checkState(state)
-                .orElseThrow(() -> new IllegalArgumentException("State не существует: " + state));
+                .orElseThrow(() ->
+                        new IncorrectRequestException(String.format("Unknown state: " + state), getClass().toString()));
 
         Sort sortBy = Sort.by(Sort.Direction.DESC, "start");
 
@@ -92,27 +104,28 @@ public class BookingServiceImpl implements BookingService {
 
         switch (bookingState) {
             case ALL:
-                result = bookingRepository.findAllByBooker_Id(userId, sortBy);
+                result = bookingRepository.findAllByBookerId(userId, sortBy);
                 break;
 
             case CURRENT:
-                result = bookingRepository.findAllByBooker_IdAndStartIsBeforeAndEndIsAfter(userId, LocalDateTime.now(), LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByBookerIdAndStartIsBeforeAndEndIsAfter(userId,
+                        LocalDateTime.now(), LocalDateTime.now(), sortBy);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByBooker_IdAndEndIsBefore(userId, LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByBookerIdAndEndIsBefore(userId, LocalDateTime.now(), sortBy);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByBooker_IdAndStartIsAfter(userId, LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByBookerIdAndStartIsAfter(userId, LocalDateTime.now(), sortBy);
                 break;
 
             case WAITING:
-                result = bookingRepository.findAllByBooker_IdAndStatus(userId, BookingStatus.WAITING, sortBy);
+                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.WAITING, sortBy);
                 break;
 
             case REJECTED:
-                result = bookingRepository.findAllByBooker_IdAndStatus(userId, BookingStatus.REJECTED, sortBy);
+                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.REJECTED, sortBy);
                 break;
         }
         return result;
@@ -124,7 +137,8 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
 
         BookingState bookingState = BookingState.checkState(state)
-                .orElseThrow(() -> new IllegalArgumentException("State не существует: " + state));
+                .orElseThrow(() -> new IncorrectRequestException(String.format("Unknown state: " + state),
+                        getClass().toString()));
 
         Sort sortBy = Sort.by(Sort.Direction.DESC, "start");
 
@@ -132,27 +146,28 @@ public class BookingServiceImpl implements BookingService {
 
         switch (bookingState) {
             case ALL:
-                result = bookingRepository.findAllByItem_Owner_Id(ownerId, sortBy);
+                result = bookingRepository.findAllByItemOwnerId(ownerId, sortBy);
                 break;
 
             case CURRENT:
-                result = bookingRepository.findAllByItem_Owner_IdAndStartIsBeforeAndEndIsAfter(ownerId, LocalDateTime.now(), LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndStartIsBeforeAndEndIsAfter(ownerId,
+                        LocalDateTime.now(), LocalDateTime.now(), sortBy);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByItem_Owner_IdAndEndIsBefore(ownerId, LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, LocalDateTime.now(), sortBy);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByItem_Owner_IdAndStartIsAfter(ownerId, LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, LocalDateTime.now(), sortBy);
                 break;
 
             case WAITING:
-                result = bookingRepository.findAllByItem_Owner_IdAndStatus(ownerId, BookingStatus.WAITING, sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.WAITING, sortBy);
                 break;
 
             case REJECTED:
-                result = bookingRepository.findAllByItem_Owner_IdAndStatus(ownerId, BookingStatus.REJECTED, sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.REJECTED, sortBy);
                 break;
         }
         return result;
@@ -160,8 +175,8 @@ public class BookingServiceImpl implements BookingService {
 
 
     private void checkDates(LocalDateTime start, LocalDateTime end) {
-        if (end.isAfter(start) || start.isAfter(end) || start.equals(end)) {
-            throw new IllegalArgumentException("Некорректно указаны дата начала и/или окончания");
+        if (end.isBefore(start) || start.equals(end)) {
+            throw new IncorrectRequestException("Некорректно указаны дата начала и/или окончания", getClass().toString());
         }
     }
 }

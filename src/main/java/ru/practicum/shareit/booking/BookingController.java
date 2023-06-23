@@ -3,7 +3,6 @@ package ru.practicum.shareit.booking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingMapper;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
@@ -27,30 +26,28 @@ public class BookingController {
         return BookingMapper.toDto(bookingService.createBooking(bookingRequestDto, userId));
     }
 
-    //Подтверждение или отклонение запроса на бронирование. Только для owner
     @PatchMapping("/{bookingId}")
     public BookingResponseDto acceptOrRejectBooking(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
-                                            @PathVariable Long bookingId,
-                                            @RequestParam Boolean approved) {
+                                                    @PathVariable Long bookingId,
+                                                    @RequestParam(name = "approved") Boolean approved) {
         return BookingMapper.toDto(bookingService.acceptOrRejectBooking(userId, bookingId, approved));
     }
 
-    //Получение данных о конкретном бронировании (включая его статус). Только для booker и owner
     @GetMapping("/{bookingId}")
     public BookingResponseDto getBookingByIdForBookerAndOwner(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
-                                                      @PathVariable Long bookingId) {
+                                                              @PathVariable Long bookingId) {
         return BookingMapper.toDto(bookingService.getBookingByIdForBookerAndOwner(bookingId, userId));
     }
 
-    @GetMapping(params = "state")
+    @GetMapping
     public List<BookingResponseDto> getAllBookingsByUserAndState(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
-                                                         @RequestParam(required = false, defaultValue = "ALL") String state) {
+                                                                 @RequestParam(name = "state", defaultValue = "ALL") String state) {
         return BookingMapper.toDto(bookingService.getAllBookingsByUserAndState(userId, state));
     }
 
-    @GetMapping(params = {"owner", "state"})
-    public List<BookingResponseDto> getAllOwnedItemBookingsByState(@RequestHeader(name = "X-Sharer-User-Id") Long userId, @RequestParam Long ownerId,
-                                                           @RequestParam(required = false, defaultValue = "ALL") String state) {
+    @GetMapping("/owner")
+    public List<BookingResponseDto> getAllOwnedItemBookingsByState(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
+                                                                   @RequestParam(name = "state", defaultValue = "ALL") String state) {
         return BookingMapper.toDto(bookingService.getAllOwnedItemBookingsByState(userId, state));
     }
 }

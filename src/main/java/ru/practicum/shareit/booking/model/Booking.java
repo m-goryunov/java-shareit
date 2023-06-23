@@ -9,8 +9,9 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "BOOKINGS")
-@Getter @Setter @ToString
+@Table(name = "bookings")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,15 +19,15 @@ public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "START_DATE")
+    @Column(name = "start_date")
     private LocalDateTime start;
-    @Column(name = "END_DATE")
+    @Column(name = "end_date")
     private LocalDateTime end;
-    @OneToOne
-    @JoinColumn(name = "ITEM_ID", referencedColumnName = "ID")
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "item_id", referencedColumnName = "id")
     private Item item;
     @ManyToOne
-    @JoinColumn(name = "BOOKER_ID", referencedColumnName = "ID")
+    @JoinColumn(name = "booker_id", referencedColumnName = "id")
     private User booker;
     @Enumerated(value = EnumType.STRING)
     private BookingStatus status;
