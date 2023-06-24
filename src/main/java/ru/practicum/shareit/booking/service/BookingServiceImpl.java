@@ -3,8 +3,7 @@ package ru.practicum.shareit.booking.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.booking.dto.BookingMapper;
-import ru.practicum.shareit.booking.dto.BookingRequestDto;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.repository.BookingRepository;
 import ru.practicum.shareit.booking.util.BookingState;
@@ -17,7 +16,6 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,22 +28,22 @@ public class BookingServiceImpl implements BookingService {
     private final ItemRepository itemRepository;
 
     @Override
-    public Booking createBooking(BookingRequestDto bookingRequestDto, Long userId) {
+    @Transactional
+    public Booking createBooking(Booking booking, Long userId, Long itemId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
-        Item item = itemRepository.findById(bookingRequestDto.getItemId())
+        Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Вещь не найдена.", getClass().toString()));
 
         if (!item.getAvailable()) {
             throw new IncorrectRequestException("Вещь недоступна для бронирования.", getClass().toString());
         }
 
-        checkDates(bookingRequestDto.getStart(), bookingRequestDto.getEnd());
+        checkDates(booking.getStart(), booking.getEnd());
 
         if (Objects.equals(item.getOwner().getId(), userId))
             throw new EntityNotFoundException("Невозможно забронировать вещь у самого себя.", getClass().toString());
 
-        Booking booking = BookingMapper.fromDto(bookingRequestDto);
         booking.setBooker(user);
         booking.setItem(item);
         booking.setStatus(BookingStatus.WAITING);
@@ -54,12 +52,14 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Booking getBookingById(Long id) {
         return bookingRepository.findById(id).orElseThrow(() ->
                 new EntityNotFoundException("Бронирование не найдено.", getClass().toString()));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Booking getBookingByIdForBookerAndOwner(Long id, Long userId) {
         Booking booking = getBookingById(id);
         if (userId.equals(booking.getBooker().getId()) || userId.equals(booking.getItem().getOwner().getId())) {
@@ -70,6 +70,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public Booking acceptOrRejectBooking(Long userId, Long bookingId, Boolean approved) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new EntityNotFoundException("Бронирование не найдено.", getClass().toString()));
@@ -86,10 +87,11 @@ public class BookingServiceImpl implements BookingService {
             booking.setStatus(BookingStatus.REJECTED);
         }
 
-        return bookingRepository.save(booking);
+        return booking;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Booking> getAllBookingsByUserAndState(Long userId, String state) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
@@ -100,7 +102,9 @@ public class BookingServiceImpl implements BookingService {
 
         Sort sortBy = Sort.by(Sort.Direction.DESC, "start");
 
-        List<Booking> result = new ArrayList<>();
+        List<Booking> result = List.of();
+
+        final LocalDateTime NOW = LocalDateTime.now();
 
         switch (bookingState) {
             case ALL:
@@ -109,15 +113,15 @@ public class BookingServiceImpl implements BookingService {
 
             case CURRENT:
                 result = bookingRepository.findAllByBookerIdAndStartIsBeforeAndEndIsAfter(userId,
-                        LocalDateTime.now(), LocalDateTime.now(), sortBy);
+                        NOW, NOW, sortBy);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByBookerIdAndEndIsBefore(userId, LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByBookerIdAndEndIsBefore(userId, NOW, sortBy);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByBookerIdAndStartIsAfter(userId, LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByBookerIdAndStartIsAfter(userId, NOW, sortBy);
                 break;
 
             case WAITING:
@@ -132,6 +136,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Booking> getAllOwnedItemBookingsByState(Long ownerId, String state) {
         userRepository.findById(ownerId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
@@ -142,7 +147,9 @@ public class BookingServiceImpl implements BookingService {
 
         Sort sortBy = Sort.by(Sort.Direction.DESC, "start");
 
-        List<Booking> result = new ArrayList<>();
+        List<Booking> result = List.of();
+
+        final LocalDateTime NOW = LocalDateTime.now();
 
         switch (bookingState) {
             case ALL:
@@ -151,15 +158,15 @@ public class BookingServiceImpl implements BookingService {
 
             case CURRENT:
                 result = bookingRepository.findAllByItemOwnerIdAndStartIsBeforeAndEndIsAfter(ownerId,
-                        LocalDateTime.now(), LocalDateTime.now(), sortBy);
+                        NOW, NOW, sortBy);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, NOW, sortBy);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, LocalDateTime.now(), sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, NOW, sortBy);
                 break;
 
             case WAITING:

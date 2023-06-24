@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CommentMapper {
-    public static Comment toDto(CommentRequestDto commentDto) {
+    public static Comment fromDto(CommentRequestDto commentDto) {
         return Comment.builder()
                 .text(commentDto.getText())
                 .created(LocalDateTime.now())

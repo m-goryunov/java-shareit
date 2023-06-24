@@ -1,8 +1,6 @@
 package ru.practicum.shareit.user.model;
 
 import lombok.*;
-import ru.practicum.shareit.util.Create;
-import ru.practicum.shareit.util.Update;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
@@ -23,11 +21,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "NAME")
-    @NotBlank(groups = Create.class)
+    @NotBlank
     private String name;
     @Column(name = "EMAIL", unique = true)
-    @Email(groups = {Create.class, Update.class}, regexp = "[\\w._]{1,10}@[\\w]{2,}.[\\w]{2,}")
-    @NotEmpty(groups = Create.class)
+    @Email(regexp = "[\\w._]{1,10}@[\\w]{2,}.[\\w]{2,}")
+    @NotEmpty
     private String email;
 
     @Override

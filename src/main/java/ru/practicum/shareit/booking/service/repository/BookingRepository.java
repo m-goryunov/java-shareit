@@ -34,7 +34,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findAllByItemOwnerIdAndStatus(Long bookerId, BookingStatus status, Sort start);
 
-    List<Booking> findByItemIdAndEndIsBefore(Long itemId, LocalDateTime date);
+    Boolean existsAllByItemIdAndEndIsBeforeAndBooker_IdEquals(Long itemId, LocalDateTime date, Long bookerId);
 
     @Query(value = "select new ru.practicum.shareit.booking.dto.BookingDto(b.id, b.start, b.end, b.booker.id) " +
             "from Booking as b " +

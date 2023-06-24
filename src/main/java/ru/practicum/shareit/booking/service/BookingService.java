@@ -1,12 +1,11 @@
 package ru.practicum.shareit.booking.service;
 
-import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.model.Booking;
 
 import java.util.List;
 
 public interface BookingService {
-    Booking createBooking(BookingRequestDto booking, Long userId);
+    Booking createBooking(Booking booking, Long userId, Long itemId);
 
     Booking getBookingById(Long id);
 
