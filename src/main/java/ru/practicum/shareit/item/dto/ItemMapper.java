@@ -1,13 +1,15 @@
 package ru.practicum.shareit.item.dto;
 
+import ru.practicum.shareit.booking.dto.BookingMapper;
+import ru.practicum.shareit.item.comment.dto.CommentMapper;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ItemMapper {
-    public static ItemDto toItemDto(Item item) {
-        return ItemDto.builder()
+    public static ItemResponseDto toItemDto(Item item) {
+        return ItemResponseDto.builder()
                 .id(item.getId())
                 .name(item.getName())
                 .description(item.getDescription())
@@ -15,14 +17,32 @@ public class ItemMapper {
                 .build();
     }
 
-    public static List<ItemDto> toItemDto(List<Item> items) {
+    public static ItemResponseDto toItemDtoWithBookings(Item item) {
+
+        return ItemResponseDto.builder()
+                .id(item.getId())
+                .name(item.getName())
+                .description(item.getDescription())
+                .available(item.getAvailable())
+                .lastBooking(BookingMapper.toBookingDto(item.getLastBooking()))
+                .nextBooking(BookingMapper.toBookingDto(item.getNextBooking()))
+                .comments(CommentMapper.toDto(item.getComments()))
+                .build();
+    }
+
+    public static List<ItemResponseDto> toItemDto(List<Item> items) {
         return items.stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
-    public static Item fromItemDto(ItemDto itemDto) {
+    public static List<ItemResponseDto> toItemDtoWithBookings(List<Item> items) {
+        return items.stream()
+                .map(ItemMapper::toItemDtoWithBookings)
+                .collect(Collectors.toList());
+    }
 
+    public static Item fromItemDto(ItemRequestDto itemDto) {
         return Item.builder()
                 .name(itemDto.getName())
                 .description(itemDto.getDescription())
