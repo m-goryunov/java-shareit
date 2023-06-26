@@ -4,6 +4,7 @@ import ru.practicum.shareit.item.comment.Comment;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class CommentMapper {
@@ -23,9 +24,14 @@ public class CommentMapper {
                 .build();
     }
 
-    public static List<CommentResponseDto> toDto(List<Comment> comments) {
-        return comments.stream()
-                .map(CommentMapper::toDto)
-                .collect(Collectors.toList());
+    public static List<CommentResponseDto> toDto(Optional<List<Comment>> comments) {
+
+        if (comments.isPresent()) {
+            return comments.get().stream()
+                    .map(CommentMapper::toDto)
+                    .collect(Collectors.toList());
+        } else {
+            return List.of();
+        }
     }
 }

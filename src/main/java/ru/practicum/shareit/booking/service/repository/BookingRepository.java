@@ -1,16 +1,14 @@
 package ru.practicum.shareit.booking.service.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.util.BookingStatus;
+import ru.practicum.shareit.item.model.Item;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
@@ -36,15 +34,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Boolean existsAllByItemIdAndEndIsBeforeAndBooker_IdEquals(Long itemId, LocalDateTime date, Long bookerId);
 
-    @Query(value = "select new ru.practicum.shareit.booking.dto.BookingDto(b.id, b.start, b.end, b.booker.id) " +
-            "from Booking as b " +
-            "where b.item.id=?1 and b.item.owner.id=?2 and b.status=?3 and b.start<?4 " +
-            "order by b.start desc ")
-    Page<BookingDto> findLastBooking(Long itemId, Long ownerId, BookingStatus status, LocalDateTime now, Pageable pageable);
+    Optional<Booking> findFirstByItemIdAndStartLessThanEqualAndStatusOrderByEndDesc(long itemId, LocalDateTime now, BookingStatus bookingStatus);
 
-    @Query(value = "select new ru.practicum.shareit.booking.dto.BookingDto(b.id, b.start, b.end, b.booker.id) " +
-            "from Booking as b " +
-            "where b.item.id=?1 and b.item.owner.id=?2 and b.status=?3 and b.start>?4 " +
-            "order by b.start asc")
-    Page<BookingDto> findNextBooking(Long itemId, Long ownerId, BookingStatus status, LocalDateTime now, Pageable pageable);
+    Optional<Booking> findFirstByItemIdAndStartAfterAndStatusOrderByEndAsc(long itemId, LocalDateTime now, BookingStatus bookingStatus);
+
+
+    List<Booking> findByItemInAndStartLessThanEqualAndStatusOrderByEndDesc(List<Item> items, LocalDateTime now, BookingStatus status);
+
+    List<Booking> findByItemInAndStartAfterAndStatusOrderByEndAsc(List<Item> items, LocalDateTime now, BookingStatus status);
 }

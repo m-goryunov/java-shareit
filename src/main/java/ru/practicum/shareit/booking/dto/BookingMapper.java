@@ -5,6 +5,7 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class BookingMapper {
@@ -29,6 +30,17 @@ public class BookingMapper {
                 .booker(userDto)
                 .item(itemDto)
                 .build();
+    }
+
+    public static BookingDto toBookingDto(Optional<Booking> booking) {
+
+        return booking.map(value -> BookingDto.builder()
+                .id(value.getId())
+                .start(value.getStart())
+                .end(value.getEnd())
+                .bookerId(value.getBooker().getId())
+                .build()).orElse(null);
+
     }
 
     public static Booking fromDto(BookingRequestDto bookingDto) {

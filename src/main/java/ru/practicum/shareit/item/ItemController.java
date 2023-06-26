@@ -45,13 +45,13 @@ public class ItemController {
     public ItemResponseDto getItemById(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
                                        @PathVariable Long itemId) {
         log.info("Запрос  вещи {}", itemId);
-        return itemService.getItemById(itemId, userId);
+        return ItemMapper.toItemDtoWithBookings(itemService.getItemById(itemId, userId));
     }
 
     @GetMapping
     public List<ItemResponseDto> getAllItemsByUserId(@RequestHeader(name = "X-Sharer-User-Id") Long userId) {
         log.info("Запрос всех вещей по id пользователя: {}", userId);
-        return itemService.getAllItemsByUserId(userId);
+        return ItemMapper.toItemDtoWithBookings(itemService.getAllItemsByUserId(userId));
     }
 
     @GetMapping("/search")

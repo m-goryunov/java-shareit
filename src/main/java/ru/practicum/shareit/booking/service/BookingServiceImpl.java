@@ -104,7 +104,7 @@ public class BookingServiceImpl implements BookingService {
 
         List<Booking> result = List.of();
 
-        final LocalDateTime NOW = LocalDateTime.now();
+        final LocalDateTime now = LocalDateTime.now();
 
         switch (bookingState) {
             case ALL:
@@ -113,15 +113,15 @@ public class BookingServiceImpl implements BookingService {
 
             case CURRENT:
                 result = bookingRepository.findAllByBookerIdAndStartIsBeforeAndEndIsAfter(userId,
-                        NOW, NOW, sortBy);
+                        now, now, sortBy);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByBookerIdAndEndIsBefore(userId, NOW, sortBy);
+                result = bookingRepository.findAllByBookerIdAndEndIsBefore(userId, now, sortBy);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByBookerIdAndStartIsAfter(userId, NOW, sortBy);
+                result = bookingRepository.findAllByBookerIdAndStartIsAfter(userId, now, sortBy);
                 break;
 
             case WAITING:
@@ -149,7 +149,7 @@ public class BookingServiceImpl implements BookingService {
 
         List<Booking> result = List.of();
 
-        final LocalDateTime NOW = LocalDateTime.now();
+        final LocalDateTime now = LocalDateTime.now();
 
         switch (bookingState) {
             case ALL:
@@ -158,15 +158,15 @@ public class BookingServiceImpl implements BookingService {
 
             case CURRENT:
                 result = bookingRepository.findAllByItemOwnerIdAndStartIsBeforeAndEndIsAfter(ownerId,
-                        NOW, NOW, sortBy);
+                        now, now, sortBy);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, NOW, sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, now, sortBy);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, NOW, sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, now, sortBy);
                 break;
 
             case WAITING:
@@ -182,7 +182,7 @@ public class BookingServiceImpl implements BookingService {
 
 
     private void checkDates(LocalDateTime start, LocalDateTime end) {
-        if (end.isBefore(start) || start.equals(end)) {
+        if (!start.isBefore(end) || start.equals(end)) {
             throw new IncorrectRequestException("Некорректно указаны дата начала и/или окончания", getClass().toString());
         }
     }
