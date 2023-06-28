@@ -1,4 +1,4 @@
-package ru.practicum.shareit.item.dto;
+package ru.practicum.shareit.request.dto;
 
 import lombok.Builder;
 import lombok.Data;
@@ -9,15 +9,11 @@ import javax.validation.constraints.Size;
 
 @Data
 @Builder
-public class ItemRequestDto {
+public class ItemRequestDtoIn {
     private Long id;
-    @NotBlank
-    @Size(max = 255)
-    private String name;
-    @NotBlank
     @Size(max = 512)
-    private String description;
+    @NotBlank
     @NotNull
-    private Boolean available;
-    private Long requestId;
+    private String description;
+
 }

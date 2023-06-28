@@ -1,10 +1,11 @@
 package ru.practicum.shareit.item.model;
 
 import lombok.*;
+import org.hibernate.annotations.Cascade;
 import org.springframework.lang.Nullable;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.comment.Comment;
-import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
@@ -33,9 +34,6 @@ public class Item {
     @JoinColumn(name = "OWNER_ID")
     private User owner;
     @Transient
-    @JoinColumn(name = "REQUEST_ID", referencedColumnName = "ID")
-    private ItemRequest request;
-    @Transient
     @Nullable
     private Booking lastBooking;
     @Transient
@@ -44,6 +42,11 @@ public class Item {
     @Transient
     @Nullable
     private List<Comment> comments;
+    @Nullable
+    @ManyToOne(targetEntity = ItemRequest.class)
+    @JoinColumn(name = "request_id", referencedColumnName = "id")
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
+    private ItemRequest request;
 
     @Override
     public boolean equals(Object o) {
