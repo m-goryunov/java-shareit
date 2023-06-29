@@ -2,9 +2,14 @@ package ru.practicum.shareit.request.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.EntityNotFoundException;
+import ru.practicum.shareit.exception.IncorrectRequestException;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
@@ -14,6 +19,8 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,13 +38,15 @@ public class ItemRequestServiceImpl implements ItemRequestService {
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден", getClass().getName()));
         itemRequest.setRequestor(user);
         itemRequest.setCreated(LocalDateTime.now());
-        itemRequest.setItems(List.of());
+        //itemRequest.setItems(List.of());
         return itemRequestRepository.save(itemRequest);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ItemRequest getItemRequestByIdWithResponses(Long requestId) {
+    public ItemRequest getItemRequestByIdWithResponses(Long requestId, Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден", getClass().getName()));
 
         ItemRequest itemRequest = itemRequestRepository.findById(requestId)
                 .orElseThrow(() -> new EntityNotFoundException("Заявка не найдена.", getClass().getName()));
@@ -52,30 +61,56 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден", getClass().getName()));
 
-        List<ItemRequest> requests = itemRequestRepository.findAllByRequestor_IdOrderByCreatedDesc(userId);
-        List<ItemRequest> requests1 = new ArrayList<>();
-        for (ItemRequest request : requests) {
-            request.setItems(itemRepository.findByRequestId(request.getId()));
-            requests1.add(request);
-            //n-обращения к базе?
-        }
+        List<ItemRequest> requests = itemRequestRepository.findAllByRequestorId(userId);
 
-        return requests1;
+        List<Item> items = itemRepository.findAllByRequestIdIn(requests
+                .stream()
+                .map(ItemRequest::getId)
+                .collect(Collectors.toSet()));
+
+        Map<Long, ItemRequest> requestsResult = requests.stream()
+                .collect(Collectors.toMap(ItemRequest::getId, request -> request));
+
+
+        for (Item item : items) {
+            Long id = item.getRequest().getId();
+            if (requestsResult.get(id).getItems() != null) {
+                requestsResult.get(id).getItems().add(item);
+            }
+        }
+        return new ArrayList<>(requestsResult.values());
     }
 
     @Override
     @Transactional
-    public List<ItemRequest> getAllAvailableItemRequests(Long userId, Long from, Long size) {
+    public List<ItemRequest> getAllAvailableItemRequests(Long userId, Integer from, Integer size) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден", getClass().getName()));
 
-        List<ItemRequest> requests = itemRequestRepository.findAllNotByRequestorAndSort(userId);
-
-        for (ItemRequest request : requests) {
-            request.setItems(itemRepository.findByRequestId(request.getId()));
-            //n-обращения к базе?
+        if (from < 0 || size <= 0) {
+            throw new IncorrectRequestException("Переданные from/size невалидны.", getClass().getName());
         }
 
-        return requests;
+        int page = from == 0 ? 0 : (from / size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("created").descending());
+
+        List<ItemRequest> requests = itemRequestRepository.findAllByOwnerId(userId, pageable);
+
+        Map<Long, ItemRequest> requestsResult = requests.stream()
+                .collect(Collectors.toMap(ItemRequest::getId, request -> request));
+
+        List<Item> items = itemRepository.findAllByRequestIdIn(requests
+                .stream()
+                .map(ItemRequest::getId)
+                .collect(Collectors.toSet()));
+
+        for (Item item : items) {
+            Long id = item.getRequest().getId();
+            if (requestsResult.get(id).getItems() != null) {
+                requestsResult.get(id).getItems().add(item);
+            }
+        }
+
+        return new ArrayList<>(requestsResult.values());
     }
 }

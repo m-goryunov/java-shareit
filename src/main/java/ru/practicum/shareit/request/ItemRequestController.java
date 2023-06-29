@@ -29,9 +29,10 @@ public class ItemRequestController {
     }
 
     @GetMapping("/{requestId}")
-    public ItemRequestDtoOut getItemRequestByIdWithResponses(@PathVariable Long requestId) {
+    public ItemRequestDtoOut getItemRequestByIdWithResponses(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
+                                                             @PathVariable Long requestId) {
         log.info("Просмотр запроса вещи {}", requestId);
-        return ItemRequestMapper.toDto(itemRequestService.getItemRequestByIdWithResponses(requestId));
+        return ItemRequestMapper.toDto(itemRequestService.getItemRequestByIdWithResponses(requestId, userId));
     }
 
     @GetMapping
@@ -42,8 +43,8 @@ public class ItemRequestController {
 
     @GetMapping("/all")
     public List<ItemRequestDtoOut> getAllAvailableItemRequests(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
-                                                               @RequestParam(name = "from", defaultValue = "0") Long from,
-                                                               @RequestParam(name = "size", defaultValue = "10") Long size) {
+                                                               @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                                               @RequestParam(name = "size", defaultValue = "10") Integer size) {
         log.info("Запрос заявок всех заявок на вещи, кроме своих {}", userId);
         return ItemRequestMapper.toDto(itemRequestService.getAllAvailableItemRequests(userId, from, size));
     }

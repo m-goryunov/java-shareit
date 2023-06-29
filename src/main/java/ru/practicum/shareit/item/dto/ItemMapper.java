@@ -49,7 +49,7 @@ public class ItemMapper {
     public static Item fromItemDto(ItemRequestDto itemDto) {
 
         ItemRequest itemRequest = ItemRequest.builder()
-                .id(itemDto.getRequestId())
+                .id(itemDto.getRequestId() != null ? itemDto.getRequestId() : 0)
                 .build();
 
         return Item.builder()

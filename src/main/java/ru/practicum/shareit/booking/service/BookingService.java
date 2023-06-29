@@ -13,7 +13,7 @@ public interface BookingService {
 
     Booking acceptOrRejectBooking(Long userId, Long bookingId, Boolean approved);
 
-    List<Booking> getAllBookingsByUserAndState(Long userId, String state);
+    List<Booking> getAllBookingsByUserAndState(Long userId, String state, Integer from, Integer size);
 
-    List<Booking> getAllOwnedItemBookingsByState(Long userId, String state);
+    List<Booking> getAllOwnedItemBookingsByState(Long userId, String state, Integer from, Integer size);
 }

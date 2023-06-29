@@ -42,8 +42,7 @@ public class Item {
     @Transient
     @Nullable
     private List<Comment> comments;
-    @Nullable
-    @ManyToOne(targetEntity = ItemRequest.class)
+    @ManyToOne(targetEntity = ItemRequest.class, fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id", referencedColumnName = "id")
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
     private ItemRequest request;

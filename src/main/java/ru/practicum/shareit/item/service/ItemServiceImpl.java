@@ -14,6 +14,7 @@ import ru.practicum.shareit.item.comment.Comment;
 import ru.practicum.shareit.item.comment.CommentRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -44,9 +45,11 @@ public class ItemServiceImpl implements ItemService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
 
-        if (item.getRequest() != null && item.getRequest().getId() != null)
-            item.setRequest(itemRequestRepository
-                    .findById(item.getRequest().getId()).orElse(null));
+        if (item.getRequest().getId() != 0) {
+            item.setRequest(itemRequestRepository.findById(item.getRequest().getId()).orElse(null));
+        } else {
+            item.setRequest(null);
+        }
 
         item.setOwner(user);
         return itemRepository.save(item);
