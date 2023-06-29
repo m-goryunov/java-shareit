@@ -104,8 +104,6 @@ public class BookingServiceImpl implements BookingService {
 
         Pageable pageable = getPageable(from, size);
 
-        Sort sortBy = Sort.by(Sort.Direction.DESC, "start");
-
         List<Booking> result = List.of();
 
         final LocalDateTime now = LocalDateTime.now();
