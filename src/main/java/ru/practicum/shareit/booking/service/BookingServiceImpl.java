@@ -112,28 +112,27 @@ public class BookingServiceImpl implements BookingService {
 
         switch (bookingState) {
             case ALL:
-                result = bookingRepository.findAllByBookerId(userId, sortBy, pageable);
+                result = bookingRepository.findAllByBookerId(userId, pageable);
                 break;
 
             case CURRENT:
-                result = bookingRepository.findAllByBookerIdAndStartIsBeforeAndEndIsAfter(userId,
-                        now, now, sortBy, pageable);
+                result = bookingRepository.findAllByBookerIdAndStartIsBeforeAndEndIsAfter(userId, now, now, pageable);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByBookerIdAndEndIsBefore(userId, now, sortBy, pageable);
+                result = bookingRepository.findAllByBookerIdAndEndIsBefore(userId, now, pageable);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByBookerIdAndStartIsAfter(userId, now, sortBy, pageable);
+                result = bookingRepository.findAllByBookerIdAndStartIsAfter(userId, now, pageable);
                 break;
 
             case WAITING:
-                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.WAITING, sortBy, pageable);
+                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.WAITING, pageable);
                 break;
 
             case REJECTED:
-                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.REJECTED, sortBy, pageable);
+                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.REJECTED, pageable);
                 break;
         }
         return result;
@@ -151,36 +150,34 @@ public class BookingServiceImpl implements BookingService {
 
         Pageable pageable = getPageable(from, size);
 
-        Sort sortBy = Sort.by(Sort.Direction.DESC, "start");
-
         List<Booking> result = List.of();
 
         final LocalDateTime now = LocalDateTime.now();
 
         switch (bookingState) {
             case ALL:
-                result = bookingRepository.findAllByItemOwnerId(ownerId, sortBy, pageable);
+                result = bookingRepository.findAllByItemOwnerId(ownerId, pageable);
                 break;
 
             case CURRENT:
                 result = bookingRepository.findAllByItemOwnerIdAndStartIsBeforeAndEndIsAfter(ownerId,
-                        now, now, sortBy, pageable);
+                        now, now, pageable);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, now, sortBy, pageable);
+                result = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, now, pageable);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, now, sortBy, pageable);
+                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, now, pageable);
                 break;
 
             case WAITING:
-                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.WAITING, sortBy, pageable);
+                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.WAITING, pageable);
                 break;
 
             case REJECTED:
-                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.REJECTED, sortBy, pageable);
+                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.REJECTED, pageable);
                 break;
         }
         return result;
