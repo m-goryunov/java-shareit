@@ -49,15 +49,19 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemResponseDto> getAllItemsByUserId(@RequestHeader(name = "X-Sharer-User-Id") Long userId) {
+    public List<ItemResponseDto> getAllItemsByUserId(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
+                                                     @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                                     @RequestParam(name = "size", defaultValue = "10") Integer size) {
         log.info("Запрос всех вещей по id пользователя: {}", userId);
-        return ItemMapper.toItemDtoWithBookings(itemService.getAllItemsByUserId(userId));
+        return ItemMapper.toItemDtoWithBookings(itemService.getAllItemsByUserId(userId, from, size));
     }
 
     @GetMapping("/search")
-    public List<ItemResponseDto> searchItem(@RequestParam(name = "text") String text) {
+    public List<ItemResponseDto> searchItem(@RequestParam(name = "text") String text,
+                                            @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                            @RequestParam(name = "size", defaultValue = "10") Integer size) {
         log.info("Запрос поиска вещи по тексту: {}", text);
-        return ItemMapper.toItemDto(itemService.searchItem(text));
+        return ItemMapper.toItemDto(itemService.searchItem(text, from, size));
     }
 
     @PostMapping("/{itemId}/comment")

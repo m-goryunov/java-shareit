@@ -1,6 +1,8 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +16,6 @@ import ru.practicum.shareit.item.comment.Comment;
 import ru.practicum.shareit.item.comment.CommentRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
-import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -109,25 +110,27 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Item> getAllItemsByUserId(Long userId) {
+    public List<Item> getAllItemsByUserId(Long userId, Integer from, Integer size) {
         userRepository.findById(userId).orElseThrow(
                 () -> new EntityNotFoundException("Пользователь не найден", getClass().toString()));
 
-        return setAllLastAndNextBookingAndComments(itemRepository.findAllByOwnerId(userId));
+        Pageable pageable = getPageable(from, size);
+
+        return setAllLastAndNextBookingAndComments(itemRepository.findAllByOwnerId(userId, pageable), pageable);
     }
 
-    private List<Item> setAllLastAndNextBookingAndComments(List<Item> items) {
-        LocalDateTime now = LocalDateTime.now();
+    private List<Item> setAllLastAndNextBookingAndComments(List<Item> items, Pageable pageable) {
+        final LocalDateTime now = LocalDateTime.now();
 
         Map<Item, Booking> lastBookings = bookingRepository
                 .findByItemInAndStartLessThanEqualAndStatusOrderByEndDesc(items, now,
-                        BookingStatus.APPROVED)
+                        BookingStatus.APPROVED, pageable)
                 .stream()
                 .collect(Collectors.toMap(Booking::getItem, Function.identity(), (o1, o2) -> o1));
 
         Map<Item, Booking> nextBookings = bookingRepository
                 .findByItemInAndStartAfterAndStatusOrderByEndAsc(items, now,
-                        BookingStatus.APPROVED)
+                        BookingStatus.APPROVED, pageable)
                 .stream()
                 .collect(Collectors.toMap(Booking::getItem, Function.identity(), (o1, o2) -> o1));
 
@@ -158,11 +161,14 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Item> searchItem(String text) {
+    public List<Item> searchItem(String text, Integer from, Integer size) {
         if (!StringUtils.hasText(text)) {
             return List.of();
         }
-        return itemRepository.search(text);
+
+        Pageable pageable = getPageable(from, size);
+
+        return itemRepository.search(text, pageable);
     }
 
     @Override
@@ -186,5 +192,14 @@ public class ItemServiceImpl implements ItemService {
         comment.setItem(item);
 
         return commentRepository.save(comment);
+    }
+
+    private Pageable getPageable(Integer from, Integer size) {
+        if (from < 0 || size <= 0) {
+            throw new IncorrectRequestException("Переданные from/size невалидны.", getClass().getName());
+        }
+
+        int page = from == 0 ? 0 : (from / size);
+        return PageRequest.of(page, size);
     }
 }

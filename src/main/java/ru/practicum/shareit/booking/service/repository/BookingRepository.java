@@ -43,8 +43,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                                                            BookingStatus bookingStatus);
 
     List<Booking> findByItemInAndStartLessThanEqualAndStatusOrderByEndDesc(List<Item> items, LocalDateTime now,
-                                                                           BookingStatus status);
+                                                                           BookingStatus status, Pageable pageable);
 
     List<Booking> findByItemInAndStartAfterAndStatusOrderByEndAsc(List<Item> items, LocalDateTime now,
-                                                                  BookingStatus status);
+                                                                  BookingStatus status, Pageable pageable);
 }
