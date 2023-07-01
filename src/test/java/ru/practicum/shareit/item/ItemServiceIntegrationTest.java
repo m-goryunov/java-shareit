@@ -33,10 +33,10 @@ class ItemServiceIntegrationTest {
     @Test
     void saveNewItem() {
         final User userDto = User.builder().name("user").email("user@mail.ru").build();
-        final Item itemDto = Item.builder().name("item").description("cool").available(true).owner(userDto).build();
+        final Item itemDtoIn = Item.builder().id(1L).name("item").description("cool").available(true).owner(userDto).build();
 
-        UserDto user = userService.saveNewUser(userDto);
-        itemService.saveNewItem(itemDtoIn, user.getId());
+        User user = userService.createUser(userDto);
+        itemService.createItem(itemDtoIn, user.getId());
 
         TypedQuery<Item> queryItem = em.createQuery("Select i from Item i where i.name like :item", Item.class);
         Item item = queryItem.setParameter("item", itemDtoIn.getName()).getSingleResult();
