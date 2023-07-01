@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class ItemRequestServiceImpl implements ItemRequestService {
 
     private final UserRepository userRepository;
@@ -38,7 +39,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден", getClass().getName()));
         itemRequest.setRequestor(user);
         itemRequest.setCreated(LocalDateTime.now());
-        //itemRequest.setItems(List.of());
         return itemRequestRepository.save(itemRequest);
     }
 
@@ -51,7 +51,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         ItemRequest itemRequest = itemRequestRepository.findById(requestId)
                 .orElseThrow(() -> new EntityNotFoundException("Заявка не найдена.", getClass().getName()));
 
-        itemRequest.setItems(itemRepository.findByRequestId(requestId));
+        itemRequest.setItems(itemRepository.findAllByRequestId(requestId));
 
         return itemRequest;
     }
@@ -82,19 +82,15 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<ItemRequest> getAllAvailableItemRequests(Long userId, Integer from, Integer size) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден", getClass().getName()));
 
-        if (from < 0 || size <= 0) {
-            throw new IncorrectRequestException("Переданные from/size невалидны.", getClass().getName());
-        }
-
         int page = from == 0 ? 0 : (from / size);
         Pageable pageable = PageRequest.of(page, size, Sort.by("created").descending());
 
-        List<ItemRequest> requests = itemRequestRepository.findAllByOwnerId(userId, pageable);
+        List<ItemRequest> requests = itemRequestRepository.findAllByRequestorIdIsNot(userId, pageable);
 
         Map<Long, ItemRequest> requestsResult = requests.stream()
                 .collect(Collectors.toMap(ItemRequest::getId, request -> request));

@@ -7,14 +7,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.exception.EntityNotFoundException;
-import ru.practicum.shareit.item.Item;
-import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemMapper;
-import ru.practicum.shareit.request.dto.ItemRequestDtoIn;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.dto.ItemRequestDtoOut;
 import ru.practicum.shareit.request.dto.ItemRequestMapper;
-import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.repository.ItemRequestRepository;
+import ru.practicum.shareit.request.service.ItemRequestServiceImpl;
+import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,35 +36,55 @@ class ItemRequestServiceTest {
     @Mock
     private ItemRepository itemRepository;
     @InjectMocks
-    private ItemRequestService requestService;
+    private ItemRequestServiceImpl requestService;
 
-    private final User requestor = new User(2L, "user2", "user2@mail.ru");
-    private final User user = new User(1L, "User", "user@mail.ru");
-    private final ItemRequest request = new ItemRequest(1L, "description", requestor, LocalDateTime.now());
-    private final ItemRequest requestSecond = new ItemRequest(2L, "2", user, LocalDateTime.now());
-    private final Item item = new Item(1L, "item", "cool", true, user, request);
-    private final Item itemSecond = new Item(2L, "i2", "2", true, requestor, requestSecond);
+    private final User user = User.builder().name("user").email("user@mail.ru").build();
+    private final User requestor = User.builder().name("user2").email("user2@mail.ru").build();
+
+    private final ItemRequest request = ItemRequest.builder()
+            .id(1L)
+            .description("description")
+            .requestor(requestor)
+            .created(LocalDateTime.now())
+            .build();
+
+    private final ItemRequest request2 = ItemRequest.builder()
+            .id(2L)
+            .description("2")
+            .requestor(user)
+            .created(LocalDateTime.now())
+            .build();
+
+
+    private final Item item = Item.builder().name("item").description("cool").available(true).owner(user)
+            .request(request)
+            .build();
+    private final Item item2 = Item.builder().name("i2").description("2").available(true).owner(requestor)
+            .request(request2)
+            .build();
+
 
     @Test
     void saveNewRequest() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(requestor));
         when(requestRepository.save(any())).thenReturn(request);
 
-        final ItemRequestDtoOut actualRequest = requestService.saveNewRequest(
-                new ItemRequestDtoIn("description"), 2L);
+        final ItemRequest actualRequest = requestService.createItemRequest(
+                ItemRequest.builder().description("description").build(), 2L);
 
-        Assertions.assertEquals(ItemRequestMapper.toItemRequestDtoOut(request), actualRequest);
+        Assertions.assertEquals(request, actualRequest);
     }
 
     @Test
     void getRequestsByRequestor_whenUserFound_thenSavedRequest() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(requestor));
-        when(requestRepository.findAllByRequestorId(anyLong(), any())).thenReturn(List.of(request));
+        when(requestRepository.findAllByRequestorId(anyLong())).thenReturn(List.of(request));
         when(itemRepository.findAllByRequestId(1L)).thenReturn(List.of(item));
-        final ItemRequestDtoOut requestDtoOut = ItemRequestMapper.toItemRequestDtoOut(request);
-        requestDtoOut.setItems(List.of(ItemMapper.toItemDtoOut(item)));
+        final ItemRequestDtoOut requestDtoOut = ItemRequestMapper.toDto(request);
+        requestDtoOut.setItems(List.of(ItemMapper.toItemDto(item)));
 
-        List<ItemRequestDtoOut> actualRequests = requestService.getRequestsByRequestor(2L);
+        List<ItemRequestDtoOut> actualRequests = ItemRequestMapper
+                .toDto(requestService.getAllOwnedRequestsWithResponses(2L));
 
         Assertions.assertEquals(List.of(requestDtoOut), actualRequests);
     }
@@ -72,18 +94,20 @@ class ItemRequestServiceTest {
         when((userRepository).findById(3L)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(EntityNotFoundException.class, () ->
-                requestService.getRequestsByRequestor(3L));
+                requestService.getAllOwnedRequestsWithResponses(3L));
     }
 
     @Test
     void getAllRequests_whenCorrectPageArguments_thenReturnRequests() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(requestor));
-        when(requestRepository.findAllByRequestorIdIsNot(anyLong(), any())).thenReturn(List.of(requestSecond));
-        when(itemRepository.findAllByRequestId(anyLong())).thenReturn(List.of(itemSecond));
-        final ItemRequestDtoOut requestDtoOut = ItemRequestMapper.toItemRequestDtoOut(requestSecond);
-        requestDtoOut.setItems(List.of(ItemMapper.toItemDtoOut(itemSecond)));
+        when(requestRepository.findAllByRequestorIdIsNot(anyLong(), any())).thenReturn(List.of(request2));
+        when(itemRepository.findAllByRequestId(anyLong())).thenReturn(List.of(item2));
 
-        List<ItemRequestDtoOut> actualRequests = requestService.getAllRequests(0, 10, 2L);
+        final ItemRequestDtoOut requestDtoOut = ItemRequestMapper.toDto(request2);
+        requestDtoOut.setItems(List.of(ItemMapper.toItemDto(item2)));
+
+        List<ItemRequestDtoOut> actualRequests = ItemRequestMapper
+                .toDto(requestService.getAllAvailableItemRequests(2L,0, 10));
 
         Assertions.assertEquals(List.of(requestDtoOut), actualRequests);
     }
@@ -93,10 +117,11 @@ class ItemRequestServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(requestRepository.findById(anyLong())).thenReturn(Optional.of(request));
         when(itemRepository.findAllByRequestId(1L)).thenReturn(List.of(item));
-        final ItemRequestDtoOut requestDto = ItemRequestMapper.toItemRequestDtoOut(request);
-        requestDto.setItems(List.of(ItemMapper.toItemDtoOut(item)));
+        final ItemRequestDtoOut requestDto = ItemRequestMapper.toDto(request);
+        requestDto.setItems(List.of(ItemMapper.toItemDto(item)));
 
-        ItemRequestDtoOut actualRequest = requestService.getRequestById(1L, 1L);
+        ItemRequestDtoOut actualRequest = ItemRequestMapper
+                .toDto(requestService.getItemRequestByIdWithResponses(1L, 1L));
 
         Assertions.assertEquals(requestDto, actualRequest);
     }
