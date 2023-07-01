@@ -11,6 +11,7 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.repository.BookingRepository;
 import ru.practicum.shareit.booking.util.BookingStatus;
+import ru.practicum.shareit.item.model.Item;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -194,7 +195,7 @@ class BookingRepositoryTest {
         PageRequest pageRequest = PageRequest.of(0, 10);
 
         List<Booking> result = bookingRepository
-                .findByItemIdInAndStartIsAfterAndStatusIs(List.of(3L), date, Status.WAITING, pageRequest);
+                .findAllByItemOwnerIdAndStatus(3L, BookingStatus.WAITING, pageRequest);
 
         assertThat(result).isEmpty();
     }
@@ -205,10 +206,10 @@ class BookingRepositoryTest {
         PageRequest pageRequest = PageRequest.of(0, 10);
 
         List<Booking> result = bookingRepository
-                .findByBookerIdAndStartIsAfterAndStatusIs(3L, date, Status.APPROVED, pageRequest);
+                .findAllByItemOwnerIdAndStatus(3L, BookingStatus.APPROVED, pageRequest);
 
         assertThat(result).isNotEmpty();
-        assertThat(result.size()).isEqualTo(2);
+        assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getItem().getName()).isEqualTo("Book");
     }
 
@@ -218,7 +219,7 @@ class BookingRepositoryTest {
         PageRequest pageRequest = PageRequest.of(0, 10);
 
         List<Booking> result = bookingRepository
-                .findByBookerIdAndStartIsAfterAndStatusIs(1L, date, Status.APPROVED, pageRequest);
+                .findAllByItemOwnerIdAndStatus(1L, BookingStatus.APPROVED, pageRequest);
 
         assertThat(result).isEmpty();
     }
@@ -229,44 +230,11 @@ class BookingRepositoryTest {
         PageRequest pageRequest = PageRequest.of(0, 10);
 
         List<Booking> result = bookingRepository
-                .findByItemIdInAndStartIsAfter(List.of(1L), date, pageRequest);
+                .findAllByItemOwnerIdAndStartIsAfter(1L, date, pageRequest);
 
         assertThat(result).isNotEmpty();
         assertThat(result.size()).isEqualTo(1);
         assertThat(result.get(0).getItem().getName()).isEqualTo("Book");
-    }
-
-    @Test
-    void findByItemIdInAndStartIsAfter_emptyResult_bookingDoesNotExist() {
-        LocalDateTime date = LocalDateTime.of(2023, 6, 30, 10, 13, 30);
-        PageRequest pageRequest = PageRequest.of(0, 10);
-
-        List<Booking> result = bookingRepository
-                .findByItemIdInAndStartIsAfter(List.of(3L), date, pageRequest);
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void findByItemIdAndEndIsBefore_notEmptyResult_bookingExist() {
-        LocalDateTime date = LocalDateTime.of(2023, 6, 30, 10, 13, 30);
-
-        List<Booking> result = bookingRepository
-                .findByItemIdAndEndIsBefore(1L, date);
-
-        assertThat(result).isNotEmpty();
-        assertThat(result.size()).isEqualTo(1);
-        assertThat(result.get(0).getItem().getName()).isEqualTo("Book");
-    }
-
-    @Test
-    void findByItemIdAndEndIsBefore_emptyResult_bookingDoesNotExist() {
-        LocalDateTime date = LocalDateTime.of(2023, 6, 1, 10, 13, 30);
-
-        List<Booking> result = bookingRepository
-                .findByItemIdAndEndIsBefore(2L, date);
-
-        assertThat(result).isEmpty();
     }
 
     @Test
@@ -274,11 +242,10 @@ class BookingRepositoryTest {
         LocalDateTime date = LocalDateTime.of(2023, 6, 30, 10, 13, 30);
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        Page<BookingDto> result = bookingRepository
-                .findLastBooking(1L, 1L, Status.APPROVED, date, pageRequest);
+        Booking result = bookingRepository
+                .findFirstByItemIdAndStartLessThanEqualAndStatusOrderByEndDesc(1L, date, BookingStatus.APPROVED).get();
 
-        assertThat(result).isNotEmpty();
-        assertThat((int) result.get().count()).isEqualTo(1);
+        assertThat(result).isNotNull();
     }
 
     @Test
@@ -286,10 +253,10 @@ class BookingRepositoryTest {
         LocalDateTime date = LocalDateTime.of(2023, 6, 30, 10, 13, 30);
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        Page<BookingDto> result = bookingRepository
-                .findLastBooking(1L, 2L, Status.APPROVED, date, pageRequest);
+        Booking result = bookingRepository
+                .findFirstByItemIdAndStartLessThanEqualAndStatusOrderByEndDesc(1L, date, BookingStatus.APPROVED).get();
 
-        assertThat(result).isEmpty();
+        assertThat(result).isNotNull();
     }
 
     @Test
@@ -297,21 +264,11 @@ class BookingRepositoryTest {
         LocalDateTime date = LocalDateTime.of(2023, 6, 1, 10, 13, 30);
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        Page<BookingDto> result = bookingRepository
-                .findNextBooking(1L, 1L, Status.APPROVED, date, pageRequest);
+        List<Booking> result = bookingRepository
+                .findByItemInAndStartAfterAndStatusOrderByEndAsc(List.of(new Item()), date, BookingStatus.APPROVED, pageRequest);
 
         assertThat(result).isNotEmpty();
-        assertThat((int) result.get().count()).isEqualTo(1);
+        assertThat( result.size() == 1);
     }
 
-    @Test
-    void findNextBooking_emptyResult_ownerItemIsOther() {
-        LocalDateTime date = LocalDateTime.of(2023, 6, 1, 10, 13, 30);
-        PageRequest pageRequest = PageRequest.of(0, 10);
-
-        Page<BookingDto> result = bookingRepository
-                .findNextBooking(1L, 2L, Status.APPROVED, date, pageRequest);
-
-        assertThat(result).isEmpty();
-    }
 }

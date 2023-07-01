@@ -7,15 +7,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.exception.NoCorrectRequestException;
-import ru.practicum.shareit.exception.NoFoundObjectException;
-import ru.practicum.shareit.item.ItemService;
-import ru.practicum.shareit.item.dto.ItemRequestDto;
-import ru.practicum.shareit.item.dto.ItemResponseDto;
-import ru.practicum.shareit.user.UserService;
-import ru.practicum.shareit.user.dto.UserRequestDto;
-import ru.practicum.shareit.user.dto.UserResponseDto;
+import ru.practicum.shareit.booking.util.BookingStatus;
+import ru.practicum.shareit.exception.EntityNotFoundException;
+import ru.practicum.shareit.exception.IncorrectRequestException;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.service.ItemService;
+
+import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.service.UserService;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
@@ -43,266 +44,271 @@ class BookingServiceIntegrationTest {
     }
 
     @Test
-    void createBooking_noFoundObjectException_correctRequest() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
+    void createBooking_EntityNotFoundException_correctRequest() {
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(true)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        BookingResponseDto result = bookingService.createBooking(savedUser2.getId(), request);
+        Booking result = bookingService.createBooking(request,savedUser2.getId(), savedItem.getId());
 
         assertThat(result).isNotNull();
         assertThat(result.getItem().getName()).isEqualTo(savedItem.getName());
     }
 
     @Test
-    void createBooking_noFoundObjectException_itemNotFound() {
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(1L)
+    void createBooking_EntityNotFoundException_itemNotFound() {
+
+        Item savedItem = itemService.createItem(Item.builder()
+                .name("Book")
+                .description("Good old book")
+                .available(true).build(), 1L);
+
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        assertThrows(NoFoundObjectException.class, () -> bookingService.createBooking(1L, request));
+        assertThrows(EntityNotFoundException.class, () -> bookingService.createBooking(request, 1L, 1L));
     }
 
     @Test
-    void createBooking_noCorrectRequestException_itemIsNotAvailable() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
+    void createBooking_IncorrectRequestException_itemIsNotAvailable() {
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(false)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        assertThrows(NoCorrectRequestException.class, () -> bookingService.createBooking(savedUser2.getId(), request));
+        assertThrows(IncorrectRequestException.class, () -> bookingService.createBooking(request, savedUser2.getId(), savedItem.getId()));
     }
 
     @Test
-    void createBooking_noFoundObjectException_ownerBookingItem() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
+    void createBooking_EntityNotFoundException_ownerBookingItem() {
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
+        User savedUser1 = userService.createUser(userRequest1);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(false)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        assertThrows(NoCorrectRequestException.class, () -> bookingService.createBooking(savedUser1.getId(), request));
+        assertThrows(IncorrectRequestException.class, () -> bookingService.createBooking(request, savedUser1.getId(), savedItem.getId()));
     }
 
     @Test
-    void updateStatusById_noFoundObjectException_bookingDoesNotExist() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
+    void updateStatusById_EntityNotFoundException_bookingDoesNotExist() {
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(true)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        BookingResponseDto booking = bookingService.createBooking(savedUser2.getId(), request);
+        Booking booking = bookingService.createBooking(request, savedUser2.getId(), savedItem.getId());
 
-        assertThrows(NoFoundObjectException.class, () -> bookingService.updateStatusById(10L, false, savedUser1.getId()));
+        assertThrows(EntityNotFoundException.class, () -> bookingService.acceptOrRejectBooking(savedUser1.getId(),10L, false));
     }
 
     @Test
-    void updateStatusById_noFoundObjectException_userCanNotChangeStatus() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
+    void updateStatusById_EntityNotFoundException_userCanNotChangeStatus() {
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(true)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        BookingResponseDto savedBooking = bookingService.createBooking(savedUser2.getId(), request);
+        Booking savedBooking = bookingService.createBooking(request, savedUser2.getId(), savedItem.getId());
 
-        assertThrows(NoFoundObjectException.class, () -> bookingService.updateStatusById(savedBooking.getId(), false, savedUser2.getId()));
+        assertThrows(EntityNotFoundException.class, () -> bookingService.acceptOrRejectBooking(savedUser2.getId(), savedBooking.getId(), false));
     }
 
     @Test
     void updateStatusById_npExceptions_correctRequest() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(true)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        BookingResponseDto savedBooking = bookingService.createBooking(savedUser2.getId(), request);
+        Booking savedBooking = bookingService.createBooking(request, savedUser2.getId(), savedItem.getId());
 
-        assertDoesNotThrow(() -> bookingService.updateStatusById(savedBooking.getId(), false,
-                savedUser1.getId()));
+        assertDoesNotThrow(() -> bookingService.acceptOrRejectBooking( savedUser1.getId(), savedBooking.getId(), false));
 
     }
 
     @Test
-    void updateStatusById_noFoundObjectException_statusIsNotWaiting() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
+    void updateStatusById_EntityNotFoundException_statusIsNotWaiting() {
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(true)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        BookingResponseDto savedBooking = bookingService.createBooking(savedUser2.getId(), request);
+        Booking savedBooking = bookingService.createBooking(request, savedUser2.getId(), savedItem.getId());
 
-        bookingService.updateStatusById(savedBooking.getId(), false, savedUser1.getId());
+        bookingService.acceptOrRejectBooking(savedUser1.getId(),savedBooking.getId(), false);
 
-        assertThrows(NoCorrectRequestException.class,
-                () -> bookingService.updateStatusById(savedBooking.getId(), false, savedUser1.getId()));
+        assertThrows(IncorrectRequestException.class,
+                () -> bookingService.acceptOrRejectBooking( savedUser1.getId(), savedBooking.getId(), false));
     }
 
     @Test
-    void getBookingById_noFoundObjectException_bookingDoesNotExist() {
-        assertThrows(NoFoundObjectException.class,
-                () -> bookingService.getBookingById(1L, 1L));
+    void getBookingById_EntityNotFoundException_bookingDoesNotExist() {
+        assertThrows(EntityNotFoundException.class,
+                () -> bookingService.getBookingById(1L));
     }
 
     @Test
-    void getBookingById_noFoundObjectException_userIsNotOwnerBooking() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
-        UserRequestDto userRequest3 = UserRequestDto.builder().name("Sam").email("sam@mail.ru").build();
+    void getBookingById_EntityNotFoundException_userIsNotOwnerBooking() {
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
+        User userRequest3 = User.builder().name("Sam").email("sam@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
-        UserResponseDto savedUser3 = userService.createUser(userRequest3);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
+        User savedUser3 = userService.createUser(userRequest3);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(true)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        BookingResponseDto savedBooking = bookingService.createBooking(savedUser2.getId(), request);
+        Booking savedBooking = bookingService.createBooking(request, savedUser2.getId(), savedItem.getId());
 
-        assertThrows(NoFoundObjectException.class,
-                () -> bookingService.getBookingById(savedBooking.getId(), savedUser3.getId()));
+        assertThrows(EntityNotFoundException.class,
+                () -> bookingService.getBookingById(savedBooking.getId()));
     }
 
     @Test
     void getBookingById_correctBooking_requestIsCorrect() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(true)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        BookingResponseDto savedBooking = bookingService.createBooking(savedUser2.getId(), request);
+        Booking savedBooking = bookingService.createBooking(request, savedUser2.getId(), savedItem.getId());
 
-        BookingResponseDto result = bookingService.getBookingById(savedBooking.getId(), savedUser2.getId());
+        Booking result = bookingService.getBookingById(savedBooking.getId());
 
         assertThat(result.getItem().getName()).isEqualTo(itemRequest.getName());
         assertThat(result.getBooker().getName()).isEqualTo(savedUser2.getName());
@@ -310,58 +316,58 @@ class BookingServiceIntegrationTest {
 
     @Test
     void getAllByBookerId_emptyResultList_requestIsCorrect() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(true)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        BookingResponseDto savedBooking = bookingService.createBooking(savedUser2.getId(), request);
+        Booking savedBooking = bookingService.createBooking(request, savedUser2.getId(), savedItem.getId());
 
-        List<BookingResponseDto> result = bookingService.getAllByBookerId(savedUser2.getId(), State.WAITING.toString(), 0, 10);
+        List<Booking> result = bookingService.getAllBookingsByUserAndState(savedUser2.getId(), BookingStatus.WAITING.toString(), 0, 10);
 
         assertThat(result).isEmpty();
     }
 
     @Test
     void getAllByOwnerId_emptyResultList_requestIsCorrect() {
-        UserRequestDto userRequest1 = UserRequestDto.builder().name("Nikita").email("nikita@mail.ru").build();
-        UserRequestDto userRequest2 = UserRequestDto.builder().name("Tom").email("tom@mail.ru").build();
+        User userRequest1 = User.builder().name("Nikita").email("nikita@mail.ru").build();
+        User userRequest2 = User.builder().name("Tom").email("tom@mail.ru").build();
 
-        UserResponseDto savedUser1 = userService.createUser(userRequest1);
-        UserResponseDto savedUser2 = userService.createUser(userRequest2);
+        User savedUser1 = userService.createUser(userRequest1);
+        User savedUser2 = userService.createUser(userRequest2);
 
-        ItemRequestDto itemRequest = ItemRequestDto.builder()
+        Item itemRequest = Item.builder()
                 .name("Book")
                 .description("Good old book")
                 .available(true)
                 .build();
 
-        ItemResponseDto savedItem = itemService.createItem(itemRequest, savedUser1.getId());
+        Item savedItem = itemService.createItem(itemRequest, savedUser1.getId());
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(savedItem.getId())
+        Booking request = Booking.builder()
+                .item(savedItem)
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        BookingResponseDto savedBooking = bookingService.createBooking(savedUser2.getId(), request);
+        Booking savedBooking = bookingService.createBooking(request, savedUser2.getId(), savedItem.getId());
 
-        List<BookingResponseDto> result = bookingService.getAllByOwnerId(savedUser2.getId(), State.WAITING.toString(), 0, 10);
+        List<Booking> result = bookingService.getAllOwnedItemBookingsByState(savedUser2.getId(), BookingStatus.WAITING.toString(), 0, 10);
 
         assertThat(result).isEmpty();
     }

@@ -13,16 +13,13 @@ import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.BookingServiceImpl;
 import ru.practicum.shareit.booking.service.repository.BookingRepository;
-import ru.practicum.shareit.exception.NoCorrectRequestException;
-import ru.practicum.shareit.exception.NoFoundObjectException;
-import ru.practicum.shareit.exception.NoValidArgumentException;
-import ru.practicum.shareit.item.Item;
-import ru.practicum.shareit.item.ItemRepository;
+import ru.practicum.shareit.booking.util.BookingStatus;
+import ru.practicum.shareit.exception.EntityNotFoundException;
+import ru.practicum.shareit.exception.IncorrectRequestException;
+import ru.practicum.shareit.exception.IncorrectRequestException;
+import ru.practicum.shareit.exception.IncorrectRequestException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
-import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserService;
-import ru.practicum.shareit.user.dto.UserResponseDto;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
@@ -30,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -79,23 +77,21 @@ class BookingServiceImplTest {
 
 
     @Test
-    void createBooking_noFoundObjectException_userIdDoesNotExist() {
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(1L)
+    void createBooking_EntityNotFoundException_userIdDoesNotExist() {
+        Booking request = Booking.builder()
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
-        doThrow(NoFoundObjectException.class)
-                .when(userService).findUserById(anyLong());
+        doThrow(EntityNotFoundException.class)
+                .when(userService).getUserById(anyLong());
 
-        assertThrows(NoFoundObjectException.class, () -> underTest.createBooking(1L, request));
+        assertThrows(EntityNotFoundException.class, () -> underTest.createBooking(request, 1L, 1L));
     }
 
     @Test
-    void createBooking_noFoundObjectException_itemDoesNotExist() {
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(10L)
+    void createBooking_EntityNotFoundException_itemDoesNotExist() {
+        Booking request = Booking.builder()
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
@@ -103,41 +99,38 @@ class BookingServiceImplTest {
         when(itemRepository.findById(anyLong()))
                 .thenReturn(Optional.empty());
 
-        assertThrows(NoFoundObjectException.class, () -> underTest.createBooking(1L, request));
+        assertThrows(EntityNotFoundException.class, () -> underTest.createBooking(request, 1L, 1L));
     }
 
     @Test
-    void createBooking_noCorrectRequestException_availableIsFalse() {
+    void createBooking_IncorrectRequestException_availableIsFalse() {
         item.setAvailable(false);
 
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(1L)
+        Booking request = Booking.builder()
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
         when(itemRepository.findById(anyLong())).thenReturn(Optional.of(item));
 
-        assertThrows(NoCorrectRequestException.class, () -> underTest.createBooking(1L, request));
+        assertThrows(IncorrectRequestException.class, () -> underTest.createBooking(request, 1L, 1L));
     }
 
     @Test
-    void createBooking_noFoundObjectException_ownerAndRequestorIsSame() {
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(1L)
+    void createBooking_EntityNotFoundException_ownerAndRequestorIsSame() {
+        Booking request = Booking.builder()
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
 
         when(itemRepository.findById(anyLong())).thenReturn(Optional.of(item));
 
-        assertThrows(NoFoundObjectException.class, () -> underTest.createBooking(1L, request));
+        assertThrows(EntityNotFoundException.class, () -> underTest.createBooking(request, 1L, 1L));
     }
 
     @Test
     void createBooking_successfulCreate_requestIsCorrect() {
-        BookingRequestDto request = BookingRequestDto.builder()
-                .itemId(1L)
+        Booking request = Booking.builder()
                 .start(LocalDateTime.of(2023, 2, 10, 17, 10, 5))
                 .end(LocalDateTime.of(2023, 2, 10, 17, 10, 5).plusDays(15))
                 .build();
@@ -148,41 +141,41 @@ class BookingServiceImplTest {
         when(bookingRepository.save(any(Booking.class)))
                 .thenReturn(booking);
 
-        underTest.createBooking(2L, request);
+        underTest.createBooking(request, 2L, 2L);
 
         verify(bookingRepository, times(1)).save(any(Booking.class));
     }
 
     @Test
-    void updateStatusById_noFoundObjectException_bookingDoNotExist() {
+    void updateStatusById_EntityNotFoundException_bookingDoNotExist() {
         when(itemRepository.findById(anyLong()))
                 .thenReturn(Optional.empty());
 
-        assertThrows(NoFoundObjectException.class, () -> underTest.updateStatusById(1L, true, 1L));
+        assertThrows(EntityNotFoundException.class, () -> underTest.acceptOrRejectBooking(1L, 1L, true));
     }
 
     @Test
-    void updateStatusById_noFoundObjectException_userIsNotOwnerBooking() {
+    void updateStatusById_EntityNotFoundException_userIsNotOwnerBooking() {
         when(bookingRepository.findById(anyLong()))
                 .thenReturn(Optional.of(booking));
 
-        assertThrows(NoFoundObjectException.class, () -> underTest.updateStatusById(1L, true, 2L));
+        assertThrows(EntityNotFoundException.class, () -> underTest.acceptOrRejectBooking(1L, 2L, true));
     }
 
     @Test
-    void updateStatusById_noCorrectRequestException_statusIsNotWaiting() {
-        booking.setStatus(Status.REJECTED);
+    void updateStatusById_IncorrectRequestException_statusIsNotWaiting() {
+        booking.setStatus(BookingStatus.REJECTED);
 
         when(bookingRepository.findById(anyLong()))
                 .thenReturn(Optional.of(booking));
 
-        assertThrows(NoCorrectRequestException.class, () -> underTest.updateStatusById(1L, true, 1L));
+        assertThrows(IncorrectRequestException.class, () -> underTest.acceptOrRejectBooking(1L,1L, true));
     }
 
     @Test
     void updateStatusById_successfullyUpdatedWithStatusApproved_correctRequest() {
         boolean approved = true;
-        booking.setStatus(Status.WAITING);
+        booking.setStatus(BookingStatus.WAITING);
 
         when(bookingRepository.findById(anyLong()))
                 .thenReturn(Optional.of(booking));
@@ -190,16 +183,16 @@ class BookingServiceImplTest {
         when(bookingRepository.save(any(Booking.class)))
                 .thenReturn(booking);
 
-        BookingResponseDto bookingResponse = underTest.updateStatusById(1L, approved, 1L);
+        Booking bookingResponse = underTest.acceptOrRejectBooking(1L, 1L, approved);
 
         verify(bookingRepository, times(1)).save(any(Booking.class));
-        assertEquals(Status.APPROVED, bookingResponse.getStatus());
+        assertEquals(BookingStatus.APPROVED, bookingResponse.getStatus());
     }
 
     @Test
     void updateStatusById_successfullyUpdatedWithStatusRejected_correctRequest() {
         boolean approved = false;
-        booking.setStatus(Status.WAITING);
+        booking.setStatus(BookingStatus.WAITING);
 
         when(bookingRepository.findById(anyLong()))
                 .thenReturn(Optional.of(booking));
@@ -207,26 +200,26 @@ class BookingServiceImplTest {
         when(bookingRepository.save(any(Booking.class)))
                 .thenReturn(booking);
 
-        BookingResponseDto bookingResponse = underTest.updateStatusById(1L, approved, 1L);
+        Booking bookingResponse = underTest.acceptOrRejectBooking(1L,1L, approved);
 
         verify(bookingRepository, times(1)).save(any(Booking.class));
-        assertEquals(Status.REJECTED, bookingResponse.getStatus());
+        assertEquals(BookingStatus.REJECTED, bookingResponse.getStatus());
     }
 
     @Test
-    void getBookingById_noFoundObjectException_bookingDoNotExist() {
+    void getBookingById_EntityNotFoundException_bookingDoNotExist() {
         when(bookingRepository.findById(anyLong()))
                 .thenReturn(Optional.empty());
 
-        assertThrows(NoFoundObjectException.class, () -> underTest.getBookingById(1L, 1L));
+        assertThrows(EntityNotFoundException.class, () -> underTest.getBookingById(1L));
     }
 
     @Test
-    void getBookingById_noFoundObjectException_userIsNotItemOwnerOrBooker() {
+    void getBookingById_EntityNotFoundException_userIsNotItemOwnerOrBooker() {
         when(bookingRepository.findById(anyLong()))
                 .thenReturn(Optional.of(booking));
 
-        assertThrows(NoFoundObjectException.class, () -> underTest.getBookingById(1L, 33L));
+        assertThrows(EntityNotFoundException.class, () -> underTest.getBookingById(55L));
     }
 
     @Test
@@ -235,38 +228,38 @@ class BookingServiceImplTest {
                 .thenReturn(Optional.of(booking));
 
         when(userService.getUserById(anyLong()))
-                .thenReturn(UserResponseDto.builder().id(1L).name("Nikita").email("nikita@mail.ru").build());
+                .thenReturn(User.builder().id(1L).name("Nikita").email("nikita@mail.ru").build());
 
-        underTest.getBookingById(1L, 1L);
+        underTest.getBookingById(1L);
 
         verify(bookingRepository, times(1)).findById(anyLong());
     }
 
     @Test
-    void getAllByBookerId_noFoundObjectException_userDoNotExist() {
-        doThrow(NoFoundObjectException.class)
-                .when(userService).checkExistUserById(anyLong());
+    void getAllByBookerId_EntityNotFoundException_userDoNotExist() {
+        doThrow(EntityNotFoundException.class)
+                .when(userService).getUserById(anyLong());
 
-        assertThrows(NoFoundObjectException.class, () -> underTest.getAllByBookerId(1L, "ALL", 0, 10));
+        assertThrows(EntityNotFoundException.class, () -> underTest.getAllBookingsByUserAndState(1L, "ALL", 0, 10));
     }
 
     @Test
-    void getAllByBookerId_noValidArgumentException_sizeAndFromAreNotCorrect() {
+    void getAllByBookerId_IncorrectRequestException_sizeAndFromAreNotCorrect() {
         int from = -1;
         int size = -1;
         doNothing()
-                .when(userService).checkExistUserById(anyLong());
+                .when(userService).getUserById(anyLong());
 
-        assertThrows(NoValidArgumentException.class, () -> underTest.getAllByBookerId(1L, "ALL", from, size));
+        assertThrows(IncorrectRequestException.class, () -> underTest.getAllBookingsByUserAndState(1L, "ALL", from, size));
     }
 
     @Test
-    void getAllByBookerId_noCorrectRequestException_stateIsIncorrect() {
+    void getAllByBookerId_IncorrectRequestException_stateIsIncorrect() {
         String state = "NONE";
         doNothing()
-                .when(userService).checkExistUserById(anyLong());
+                .when(userService).getUserById(anyLong());
 
-        assertThrows(NoCorrectRequestException.class, () -> underTest.getAllByBookerId(1L, state, 0, 10));
+        assertThrows(IncorrectRequestException.class, () -> underTest.getAllBookingsByUserAndState(1L, state, 0, 10));
     }
 
     @Test
@@ -277,11 +270,11 @@ class BookingServiceImplTest {
         int page = 0;
 
         doNothing()
-                .when(userService).checkExistUserById(anyLong());
+                .when(userService).getUserById(anyLong());
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("start").descending());
 
-        underTest.getAllByBookerId(1L, state, from, size);
+        underTest.getAllBookingsByUserAndState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
                 .findAllByBookerId(1L, pageable);
@@ -294,12 +287,12 @@ class BookingServiceImplTest {
         int size = 10;
 
         doNothing()
-                .when(userService).checkExistUserById(anyLong());
+                .when(userService).getUserById(anyLong());
 
-        underTest.getAllByBookerId(1L, state, from, size);
+        underTest.getAllBookingsByUserAndState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findByBookerIdAndStartIsBeforeAndEndIsAfter(anyLong(), any(LocalDateTime.class),
+                .findAllByBookerIdAndStartIsBeforeAndEndIsAfter(anyLong(), any(LocalDateTime.class),
                         any(LocalDateTime.class), any(Pageable.class));
     }
 
@@ -310,12 +303,12 @@ class BookingServiceImplTest {
         int size = 10;
 
         doNothing()
-                .when(userService).checkExistUserById(anyLong());
+                .when(userService).getUserById(anyLong());
 
-        underTest.getAllByBookerId(1L, state, from, size);
+        underTest.getAllBookingsByUserAndState(1L, state, from, size);
 
         verify(bookingRepository, atLeast(1))
-                .findByBookerIdAndEndIsBefore(anyLong(), any(LocalDateTime.class), any(Pageable.class));
+                .findAllByBookerIdAndEndIsBefore(anyLong(), any(LocalDateTime.class), any(Pageable.class));
     }
 
     @Test
@@ -325,12 +318,12 @@ class BookingServiceImplTest {
         int size = 10;
 
         doNothing()
-                .when(userService).checkExistUserById(anyLong());
+                .when(userService).getUserById(anyLong());
 
-        underTest.getAllByBookerId(1L, state, from, size);
+        underTest.getAllBookingsByUserAndState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findByBookerIdAndStartIsAfter(anyLong(), any(LocalDateTime.class), any(Pageable.class));
+                .findAllByBookerIdAndStartIsAfter(anyLong(), any(LocalDateTime.class), any(Pageable.class));
     }
 
     @Test
@@ -340,13 +333,13 @@ class BookingServiceImplTest {
         int size = 10;
 
         doNothing()
-                .when(userService).checkExistUserById(anyLong());
+                .when(userService).getUserById(anyLong());
 
-        underTest.getAllByBookerId(1L, state, from, size);
+        underTest.getAllBookingsByUserAndState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findByBookerIdAndStartIsAfterAndStatusIs(anyLong(), any(LocalDateTime.class),
-                        any(Status.class), any(Pageable.class));
+                .findAllByBookerIdAndStatus(anyLong(),
+                        any(BookingStatus.class), any(Pageable.class));
     }
 
     @Test
@@ -356,33 +349,33 @@ class BookingServiceImplTest {
         int size = 10;
 
         doNothing()
-                .when(userService).checkExistUserById(anyLong());
+                .when(userService).getUserById(anyLong());
 
-        underTest.getAllByBookerId(1L, state, from, size);
+        underTest.getAllBookingsByUserAndState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findByBookerIdAndStartIsAfterAndStatusIs(anyLong(), any(LocalDateTime.class),
-                        any(Status.class), any(Pageable.class));
+                .findAllByBookerIdAndStatus(anyLong(),
+                        any(BookingStatus.class), any(Pageable.class));
     }
 
     @Test
-    void getAllByOwnerId_noFoundObjectException_userDoNotExist() {
-        doThrow(NoFoundObjectException.class)
-                .when(userService).findUserById(anyLong());
+    void getAllByOwnerId_EntityNotFoundException_userDoNotExist() {
+        doThrow(EntityNotFoundException.class)
+                .when(userService).getUserById(anyLong());
 
-        assertThrows(NoFoundObjectException.class,
-                () -> underTest.getAllByOwnerId(1L, "ALL", 0, 10));
+        assertThrows(EntityNotFoundException.class,
+                () -> underTest.getAllOwnedItemBookingsByState(1L, "ALL", 0, 10));
     }
 
     @Test
-    void getAllByOwnerId_noValidArgumentException_sizeAndFromNotCorrect() {
+    void getAllByOwnerId_IncorrectRequestException_sizeAndFromNotCorrect() {
         int from = -1;
         int size = -1;
 
-        when(userService.findUserById(anyLong())).thenReturn(user);
+        when(userService.getUserById(anyLong())).thenReturn(user);
 
-        assertThrows(NoValidArgumentException.class,
-                () -> underTest.getAllByOwnerId(1L, "ALL", from, size));
+        assertThrows(IncorrectRequestException.class,
+                () -> underTest.getAllOwnedItemBookingsByState(1L, "ALL", from, size));
     }
 
     @Test
@@ -392,18 +385,18 @@ class BookingServiceImplTest {
         int size = 10;
         int page = 0;
 
-        when(userService.findUserById(anyLong()))
+        when(userService.getUserById(anyLong()))
                 .thenReturn(user);
 
-        when(itemRepository.findAllByOwnerId(anyLong()))
+        when(itemRepository.findAllByOwnerId(anyLong(), any()))
                 .thenReturn(List.of(item));
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("start").descending());
 
-        underTest.getAllByOwnerId(1L, state, from, size);
+        underTest.getAllOwnedItemBookingsByState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findAllByItemIdIn(List.of(item.getId()), pageable);
+                .findAllByItemOwnerId(item.getId(), pageable);
     }
 
     @Test
@@ -412,17 +405,17 @@ class BookingServiceImplTest {
         int from = 0;
         int size = 10;
 
-        when(userService.findUserById(anyLong()))
+        when(userService.getUserById(anyLong()))
                 .thenReturn(user);
 
         when(itemRepository.findAllByOwnerId(anyLong(), any()))
                 .thenReturn(List.of(item));
 
 
-        underTest.getAllByOwnerId(1L, state, from, size);
+        underTest.getAllOwnedItemBookingsByState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findByItemIdInAndStartIsBeforeAndEndIsAfter(anyList(), any(LocalDateTime.class),
+                .findAllByItemOwnerIdAndStartIsBeforeAndEndIsAfter(anyLong(), any(LocalDateTime.class),
                         any(LocalDateTime.class), any(Pageable.class));
     }
 
@@ -432,17 +425,17 @@ class BookingServiceImplTest {
         int from = 0;
         int size = 10;
 
-        when(userService.findUserById(anyLong()))
+        when(userService.getUserById(anyLong()))
                 .thenReturn(user);
 
         when(itemRepository.findAllByOwnerId(anyLong(), any()))
                 .thenReturn(List.of(item));
 
 
-        underTest.getAllByOwnerId(1L, state, from, size);
+        underTest.getAllOwnedItemBookingsByState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findByItemIdInAndEndIsBefore(anyList(), any(LocalDateTime.class), any(Pageable.class));
+                .findAllByItemOwnerIdAndEndIsBefore(anyLong(), any(LocalDateTime.class), any(Pageable.class));
     }
 
     @Test
@@ -451,17 +444,17 @@ class BookingServiceImplTest {
         int from = 0;
         int size = 10;
 
-        when(userService.findUserById(anyLong()))
+        when(userService.getUserById(anyLong()))
                 .thenReturn(user);
 
         when(itemRepository.findAllByOwnerId(anyLong(), any()))
                 .thenReturn(List.of(item));
 
 
-        underTest.getAllByOwnerId(1L, state, from, size);
+        underTest.getAllOwnedItemBookingsByState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findByItemIdInAndStartIsAfter(anyList(), any(LocalDateTime.class), any(Pageable.class));
+                .findAllByItemOwnerIdAndStartIsAfter(anyLong(), any(LocalDateTime.class), any(Pageable.class));
     }
 
     @Test
@@ -470,18 +463,18 @@ class BookingServiceImplTest {
         int from = 0;
         int size = 10;
 
-        when(userService.findUserById(anyLong()))
+        when(userService.getUserById(anyLong()))
                 .thenReturn(user);
 
         when(itemRepository.findAllByOwnerId(anyLong(), any()))
                 .thenReturn(List.of(item));
 
 
-        underTest.getAllByOwnerId(1L, state, from, size);
+        underTest.getAllOwnedItemBookingsByState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findByItemIdInAndStartIsAfterAndStatusIs(anyList(), any(LocalDateTime.class),
-                        any(Status.class), any(Pageable.class));
+                .findAllByItemOwnerIdAndStatus(anyLong(),
+                        any(BookingStatus.class), any(Pageable.class));
     }
 
     @Test
@@ -490,17 +483,17 @@ class BookingServiceImplTest {
         int from = 0;
         int size = 10;
 
-        when(userService.findUserById(anyLong()))
+        when(userService.getUserById(anyLong()))
                 .thenReturn(user);
 
         when(itemRepository.findAllByOwnerId(anyLong(), any()))
                 .thenReturn(List.of(item));
 
 
-        underTest.getAllByOwnerId(1L, state, from, size);
+        underTest.getAllOwnedItemBookingsByState(1L, state, from, size);
 
         verify(bookingRepository, times(1))
-                .findByItemIdInAndStartIsAfterAndStatusIs(anyList(), any(LocalDateTime.class),
-                        any(Status.class), any(Pageable.class));
+                .findAllByItemOwnerIdAndStatus(anyLong(),
+                        any(BookingStatus.class), any(Pageable.class));
     }
 }

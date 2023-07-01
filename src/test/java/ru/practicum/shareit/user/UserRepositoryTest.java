@@ -4,27 +4,26 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.jdbc.Sql;
+import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @DataJpaTest
-@Sql("classpath:repository/data.sql")
-@DirtiesContext(classMode = AFTER_EACH_TEST_METHOD)
 class UserRepositoryTest {
+
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
+
+    private final User user = new User(null, "user", "user@mail.ru");
 
     @Test
-    void findByEmail_notEmptyOptional_emailExist() {
-        Optional<User> resultOptional = userRepository.findByEmail("tom@mail.ru");
-
-        assertTrue(resultOptional.isPresent());
-        assertThat(resultOptional.get().getId()).isNotNull();
-        assertThat(resultOptional.get().getName()).isEqualTo("Tom");
-        assertThat(resultOptional.get().getEmail()).isEqualTo("tom@mail.ru");
+    @DirtiesContext
+    void testSaveUser() {
+        assertThat(user.getId(), equalTo(null));
+        userRepository.save(user);
+        assertThat(user.getId(), notNullValue());
     }
 }

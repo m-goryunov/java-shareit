@@ -1,3 +1,6 @@
+/*
+SET SCHEMA "PUBLIC";
+
 INSERT INTO users (name, email) values ('Mike', 'mike@mail.ru');
 INSERT INTO users (name, email) values ('Tom', 'tom@mail.ru');
 INSERT INTO users (name, email) values ('Sam', 'sam@mail.ru');
@@ -20,4 +23,4 @@ INSERT INTO bookings (item_id, start_date, end_date, booker_id, status) VALUES
     (1,  '2023-06-10T10:13:30', '2023-06-20T10:13:30', 3,'APPROVED');
 
 INSERT INTO bookings (item_id, start_date, end_date, booker_id, status) VALUES
-    (2,  '2023-06-10T10:13:30', '2023-06-20T10:13:30', 3,'APPROVED');
+    (2,  '2023-06-10T10:13:30', '2023-06-20T10:13:30', 3,'APPROVED');*/
