@@ -52,8 +52,7 @@ public class BookingController {
     public List<BookingResponseDto> getAllOwnedItemBookingsByState(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
                                                                    @RequestParam(name = "state", defaultValue = "ALL") String state,
                                                                    @RequestParam(name = "from", defaultValue = "0") Integer from,
-                                                                   @RequestParam(name = "size", defaultValue = "10") Integer size)
-    {
+                                                                   @RequestParam(name = "size", defaultValue = "10") Integer size) {
         return BookingMapper.toDto(bookingService.getAllOwnedItemBookingsByState(userId, state, from, size));
     }
 }

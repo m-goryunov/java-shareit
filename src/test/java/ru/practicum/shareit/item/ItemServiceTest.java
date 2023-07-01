@@ -48,8 +48,8 @@ class ItemServiceTest {
     private final User user = User.builder().id(id).name("User").email("user@mail.ru").build();
     private final User notOwner = User.builder().id(2L).name("User2").email("user2@mail.ru").build();
     private final Item itemDtoIn = Item.builder().name("item").description("cool item").available(true).build();
-    private final ItemResponseDto itemDtoOut = ItemResponseDto.builder().id(id).name("item").description("cool item").available(true).build();
-    private final Item item = Item.builder().name("item").description("cool item").available(true).owner(user).build();
+    private final ItemResponseDto itemDtoOut = ItemResponseDto.builder().id(id).name("item").description("cool item").available(true).requestId(0L).build();
+    private final Item item = Item.builder().id(1L).name("item").description("cool item").available(true).owner(user).build();
     private final Comment commentDto = Comment.builder().id(id).text("abc").author(user)
             .created(LocalDateTime.of(2023, 7, 1, 12, 12, 12)).build();
     private final Comment comment = new Comment(id, "abc", item, user,
@@ -84,7 +84,7 @@ class ItemServiceTest {
 
     @Test
     void updateItem_whenUserIsOwner_thenUpdatedItem() {
-        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+//        when(userRepository.findById(id)).thenReturn(Optional.of(user));
         when(itemRepository.findById(id)).thenReturn(Optional.of(item));
 
         ItemResponseDto actualItemDto = ItemMapper.toItemDto(itemService.updateItemById(itemDtoIn, id, id));
@@ -94,26 +94,26 @@ class ItemServiceTest {
 
     @Test
     void updateItem_whenUserNotOwner_thenNotUpdatedItem() {
-        when(userRepository.findById(2L)).thenReturn(Optional.of(notOwner));
-        when(itemRepository.findById(id)).thenReturn(Optional.of(item));
+//        when(userRepository.findById(2L)).thenReturn(Optional.of(notOwner));
+//        when(itemRepository.findById(id)).thenReturn(Optional.of(item));
 
         Assertions.assertThrows(EntityNotFoundException.class, () -> itemService.updateItemById(itemDtoIn, id, 2L));
     }
 
     @Test
     void getItemById_whenItemFound_thenReturnedItem() {
-        when(bookingRepository.findByItemInAndStartLessThanEqualAndStatusOrderByEndDesc(any(), any(), any(), any()))
-                .thenReturn(List.of(booking));
-        when(bookingRepository.findByItemInAndStartAfterAndStatusOrderByEndAsc(any(), any(), any(), any()))
-                .thenReturn(List.of(booking));
+        when(bookingRepository.findFirstByItemIdAndStartLessThanEqualAndStatusOrderByEndDesc(anyLong(), any(), any()))
+                .thenReturn(Optional.of(booking));
+        when(bookingRepository.findFirstByItemIdAndStartAfterAndStatusOrderByEndAsc(anyLong(), any(), any()))
+                .thenReturn(Optional.of(booking));
         when(commentRepository.findAllByItemId(id)).thenReturn(List.of(comment));
         when(itemRepository.findById(id)).thenReturn(Optional.of(item));
-        final ItemResponseDto itemDto = ItemMapper.toItemDto(item);
+        final ItemResponseDto itemDto = ItemMapper.toItemDtoWithBookings(item);
         itemDto.setLastBooking(BookingMapper.toBookingDto(Optional.of(booking)));
         itemDto.setNextBooking(BookingMapper.toBookingDto(Optional.of(booking)));
         itemDto.setComments(List.of(CommentMapper.toDto(comment)));
 
-        ItemResponseDto actualItemDto = ItemMapper.toItemDto(itemService.getItemById(id, id));
+        ItemResponseDto actualItemDto = ItemMapper.toItemDtoWithBookings(itemService.getItemById(id, id));
 
         Assertions.assertEquals(itemDto, actualItemDto);
     }
@@ -174,8 +174,8 @@ class ItemServiceTest {
 
     @Test
     void saveNewComment_whenUserWasNotBooker_thenThrownException() {
-        when((bookingRepository).existsAllByItemIdAndEndIsBeforeAndBooker_IdEquals(anyLong(), any(), any()))
-                .thenReturn(false);
+/*        when((bookingRepository).existsAllByItemIdAndEndIsBeforeAndBooker_IdEquals(2L, LocalDateTime.now(),1L))
+                .thenReturn(false);*/
         Assertions.assertThrows(EntityNotFoundException.class, () ->
                 itemService.createComment(Comment.builder().text("abc").build(), id, 2L));
     }

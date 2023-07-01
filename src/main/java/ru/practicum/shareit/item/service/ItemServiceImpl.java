@@ -21,7 +21,10 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -60,7 +63,7 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     public Item updateItemById(Item itemDto, Long itemId, Long userId) {
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new NoSuchElementException("Вещь не найдена."));
+                .orElseThrow(() -> new EntityNotFoundException("Вещь не найдена.", getClass().getName()));
 
         if (!Objects.equals(item.getOwner().getId(), userId)) {
             throw new EntityNotFoundException("Не совпадают владельцы вещей.", getClass().toString());

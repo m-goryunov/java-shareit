@@ -8,7 +8,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.EntityNotFoundException;
-import ru.practicum.shareit.exception.IncorrectRequestException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.model.ItemRequest;
@@ -19,8 +18,6 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,22 +60,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
         List<ItemRequest> requests = itemRequestRepository.findAllByRequestorId(userId);
 
-        List<Item> items = itemRepository.findAllByRequestIdIn(requests
-                .stream()
-                .map(ItemRequest::getId)
-                .collect(Collectors.toSet()));
-
-        Map<Long, ItemRequest> requestsResult = requests.stream()
-                .collect(Collectors.toMap(ItemRequest::getId, request -> request));
-
-
-        for (Item item : items) {
-            Long id = item.getRequest().getId();
-            if (requestsResult.get(id).getItems() != null) {
-                requestsResult.get(id).getItems().add(item);
-            }
-        }
-        return new ArrayList<>(requestsResult.values());
+        return addItems(requests);
     }
 
     @Override
@@ -92,21 +74,16 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
         List<ItemRequest> requests = itemRequestRepository.findAllByRequestorIdIsNot(userId, pageable);
 
-        Map<Long, ItemRequest> requestsResult = requests.stream()
-                .collect(Collectors.toMap(ItemRequest::getId, request -> request));
+        return addItems(requests);
+    }
 
-        List<Item> items = itemRepository.findAllByRequestIdIn(requests
-                .stream()
-                .map(ItemRequest::getId)
-                .collect(Collectors.toSet()));
-
-        for (Item item : items) {
-            Long id = item.getRequest().getId();
-            if (requestsResult.get(id).getItems() != null) {
-                requestsResult.get(id).getItems().add(item);
-            }
+    private List<ItemRequest> addItems(List<ItemRequest> requests) {
+        final List<ItemRequest> result = new ArrayList<>();
+        for (ItemRequest request : requests) {
+            List<Item> items = new ArrayList<>(itemRepository.findAllByRequestId(request.getId()));
+            request.setItems(items);
+            result.add(request);
         }
-
-        return new ArrayList<>(requestsResult.values());
+        return result;
     }
 }

@@ -54,8 +54,6 @@ class ItemRequestServiceTest {
             .requestor(user)
             .created(LocalDateTime.now())
             .build();
-
-
     private final Item item = Item.builder().name("item").description("cool").available(true).owner(user)
             .request(request)
             .build();
@@ -80,7 +78,7 @@ class ItemRequestServiceTest {
         when(userRepository.findById(2L)).thenReturn(Optional.of(requestor));
         when(requestRepository.findAllByRequestorId(anyLong())).thenReturn(List.of(request));
         when(itemRepository.findAllByRequestId(1L)).thenReturn(List.of(item));
-        final ItemRequestDtoOut requestDtoOut = ItemRequestMapper.toDto(request);
+        ItemRequestDtoOut requestDtoOut = ItemRequestMapper.toDto(request);
         requestDtoOut.setItems(List.of(ItemMapper.toItemDto(item)));
 
         List<ItemRequestDtoOut> actualRequests = ItemRequestMapper
