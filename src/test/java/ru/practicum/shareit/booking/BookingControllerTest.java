@@ -7,11 +7,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.booking.dto.BookingDtoIn;
-import ru.practicum.shareit.booking.dto.BookingDtoOut;
-import ru.practicum.shareit.booking.model.BookingStatus;
-import ru.practicum.shareit.item.dto.ItemDtoShort;
-import ru.practicum.shareit.user.dto.UserDtoShort;
+import ru.practicum.shareit.booking.dto.BookingRequestDto;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.booking.util.BookingStatus;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.model.User;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -35,25 +36,26 @@ class BookingControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    private final BookingDtoIn bookingDto = new BookingDtoIn(
-            LocalDateTime.now().plusDays(1),
-            LocalDateTime.now().plusDays(2),
-            1L);
-    private final BookingDtoIn bookingNullStart = new BookingDtoIn(
-            null,
-            LocalDateTime.now().plusDays(2),
-            1L);
-    private final BookingDtoOut bookingDtoOut = new BookingDtoOut(
-            1L,
-            LocalDateTime.now().plusDays(1),
-            LocalDateTime.now().plusDays(2),
-            new ItemDtoShort(1L, "item"),
-            new UserDtoShort(1L, "user"),
-            null);
+
+    private final BookingRequestDto bookingDto = BookingRequestDto.builder().itemId(1L)
+            .start(LocalDateTime.now().plusDays(1))
+            .end(LocalDateTime.now().plusDays(2)).build();
+
+    private final BookingRequestDto bookingNullStart = BookingRequestDto.builder().itemId(1L)
+            .start(null)
+            .end(LocalDateTime.now().plusDays(2)).build();
+
+    private final Booking bookingDtoOut = Booking.builder().id(1L)
+            .start(LocalDateTime.now().plusDays(1))
+            .end(LocalDateTime.now().plusDays(2))
+            .item(Item.builder().id(1L).name("item").build())
+            .booker(User.builder().id(1L).name("user").build())
+            .build();
+
 
     @Test
     void saveNewBooking() throws Exception {
-        when(bookingService.saveNewBooking(any(), anyLong())).thenReturn(bookingDtoOut);
+        when(bookingService.createBooking(any(), anyLong(), anyLong())).thenReturn(bookingDtoOut);
 
         mvc.perform(post("/bookings")
                         .content(mapper.writeValueAsString(bookingDto))
@@ -78,7 +80,7 @@ class BookingControllerTest {
 
     @Test
     void approve() throws Exception {
-        when(bookingService.approve(anyLong(), any(), anyLong())).thenReturn(bookingDtoOut);
+        when(bookingService.acceptOrRejectBooking(anyLong(), any(), any())).thenReturn(bookingDtoOut);
         bookingDtoOut.setStatus(BookingStatus.APPROVED);
 
         mvc.perform(patch("/bookings/1?approved=true")
@@ -93,7 +95,7 @@ class BookingControllerTest {
 
     @Test
     void getBookingById() throws Exception {
-        when(bookingService.getBookingById(anyLong(), anyLong())).thenReturn(bookingDtoOut);
+        when(bookingService.getBookingById(anyLong())).thenReturn(bookingDtoOut);
 
         mvc.perform(get("/bookings/1")
                         .content(mapper.writeValueAsString(bookingDtoOut))
@@ -107,7 +109,7 @@ class BookingControllerTest {
 
     @Test
     void getAllByBooker() throws Exception {
-        when(bookingService.getAllByBooker(anyInt(), anyInt(), anyString(), anyLong()))
+        when(bookingService.getAllBookingsByUserAndState(anyLong(), anyString(), anyInt(), anyInt()))
                 .thenReturn(List.of(bookingDtoOut));
 
         mvc.perform(get("/bookings?state=ALL")
@@ -122,7 +124,7 @@ class BookingControllerTest {
 
     @Test
     void getAllByOwner() throws Exception {
-        when(bookingService.getAllByOwner(anyInt(), anyInt(), anyString(), anyLong()))
+        when(bookingService.getAllOwnedItemBookingsByState(anyLong(), anyString(), anyInt(), anyInt()))
                 .thenReturn(List.of(bookingDtoOut));
 
         mvc.perform(get("/bookings/owner?state=ALL")

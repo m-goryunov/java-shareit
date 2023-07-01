@@ -107,7 +107,7 @@ class ItemRequestServiceTest {
         requestDtoOut.setItems(List.of(ItemMapper.toItemDto(item2)));
 
         List<ItemRequestDtoOut> actualRequests = ItemRequestMapper
-                .toDto(requestService.getAllAvailableItemRequests(2L,0, 10));
+                .toDto(requestService.getAllAvailableItemRequests(2L, 0, 10));
 
         Assertions.assertEquals(List.of(requestDtoOut), actualRequests);
     }

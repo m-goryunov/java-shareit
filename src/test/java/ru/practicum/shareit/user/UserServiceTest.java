@@ -12,7 +12,6 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
-import ru.practicum.shareit.user.service.UserService;
 import ru.practicum.shareit.user.service.UserServiceImpl;
 
 import javax.validation.ConstraintViolationException;
@@ -43,7 +42,7 @@ class UserServiceTest {
         Assertions.assertEquals(1, targetUsers.size());
         verify(userRepository, times(1))
                 .findAll();
-        }
+    }
 
     @Test
     void getUserById_whenUserFound_thenReturnedUser() {

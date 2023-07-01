@@ -77,7 +77,7 @@ class UserControllerTest {
 
     @Test
     void saveNewUser_whenBlankEmail_thenThrownException() throws Exception {
-               mvc.perform(post("/users")
+        mvc.perform(post("/users")
                         .content(mapper.writeValueAsString(userNoEmail))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -87,7 +87,7 @@ class UserControllerTest {
 
     @Test
     void updateUser() throws Exception {
-        when(userService.updateUser(any(),anyLong())).thenReturn(UserMapper.fromUserDto(userDto));
+        when(userService.updateUser(any(), anyLong())).thenReturn(UserMapper.fromUserDto(userDto));
 
         mvc.perform(patch("/users/1", userDto.getId())
                         .content(mapper.writeValueAsString(userDto))

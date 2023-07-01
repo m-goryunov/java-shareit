@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.repository.BookingRepository;
@@ -16,13 +15,11 @@ import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
-
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @DataJpaTest
 class ItemRequestRepositoryTest {
@@ -42,7 +39,7 @@ class ItemRequestRepositoryTest {
     private final User requestor = User.builder().name("user2").email("user2@mail.ru").build();
     private final Booking booking = Booking.builder()
             .id(1L)
-            .start( LocalDateTime.of(2023, 7, 1, 12, 12, 12))
+            .start(LocalDateTime.of(2023, 7, 1, 12, 12, 12))
             .end(LocalDateTime.of(2023, 7, 30, 12, 12, 12))
             .booker(requestor)
             .item(item)

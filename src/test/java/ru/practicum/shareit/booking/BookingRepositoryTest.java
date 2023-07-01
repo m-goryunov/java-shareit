@@ -7,11 +7,12 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.model.BookingStatus;
-import ru.practicum.shareit.item.Item;
-import ru.practicum.shareit.item.ItemRepository;
-import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.booking.service.repository.BookingRepository;
+import ru.practicum.shareit.booking.util.BookingStatus;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,13 +30,16 @@ class BookingRepositoryTest {
     @Autowired
     private BookingRepository bookingRepository;
 
-    private final User user = new User(null, "user", "user@mail.ru");
-    private final User booker = new User(null, "user2", "user2@mail.ru");
-    private final Item item = new Item(null, "item", "cool", true, user, null);
-    private final Booking booking = new Booking(1L,
-            LocalDateTime.of(2023, 7, 1, 12, 12, 12),
-            LocalDateTime.of(2023, 7, 30, 12, 12, 12),
-            item, booker, BookingStatus.WAITING);
+    private final User user = User.builder().name("user").email("user@mail.ru").build();
+    private final User booker = User.builder().name("user2").email("user2@mail.ru").build();
+    private final Item item = Item.builder().description("cool").name("item").available(true).owner(user).build();
+    private final Booking booking = Booking.builder().id(1L)
+            .start(LocalDateTime.of(2023, 7, 1, 12, 12, 12))
+            .end(LocalDateTime.of(2023, 7, 30, 12, 12, 12))
+            .item(item)
+            .booker(booker)
+            .status(BookingStatus.WAITING)
+            .build();
 
     @BeforeEach
     void setUp() {
