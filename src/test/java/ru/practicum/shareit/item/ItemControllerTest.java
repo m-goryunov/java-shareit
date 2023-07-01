@@ -37,9 +37,6 @@ class ItemControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    private final UserDto userDto = UserDto.builder().id(1L).name("User").build();
-
-
     private final ItemRequestDto itemDtoOut = ItemRequestDto.builder().id(1L).requestId(0L).name("item")
             .description("cool item").available(true).build();
 

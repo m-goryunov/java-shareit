@@ -46,7 +46,6 @@ class ItemServiceTest {
 
     private final long id = 1L;
     private final User user = User.builder().id(id).name("User").email("user@mail.ru").build();
-    private final User notOwner = User.builder().id(2L).name("User2").email("user2@mail.ru").build();
     private final Item itemDtoIn = Item.builder().name("item").description("cool item").available(true).build();
     private final ItemResponseDto itemDtoOut = ItemResponseDto.builder().id(id).name("item").description("cool item").available(true).requestId(0L).build();
     private final Item item = Item.builder().id(1L).name("item").description("cool item").available(true).owner(user).build();
