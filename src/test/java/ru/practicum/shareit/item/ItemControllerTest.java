@@ -12,7 +12,6 @@ import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.dto.ItemRequestDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
-import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 
 import java.nio.charset.StandardCharsets;
@@ -37,39 +36,39 @@ class ItemControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    private final ItemRequestDto itemDtoOut = ItemRequestDto.builder().id(1L).requestId(0L).name("item")
+    private final ItemRequestDto itemDto = ItemRequestDto.builder().id(1L).requestId(0L).name("item")
             .description("cool item").available(true).build();
 
     private final Item item = Item.builder().id(1L).name("item")
             .description("cool item").available(true).owner(User.builder().id(1L).name("User").build()).build();
 
-    private final ItemRequestDto itemBlankName = ItemRequestDto.builder().id(1L).name("")
+    private final ItemRequestDto itemDtoBlankName = ItemRequestDto.builder().id(1L).name("")
             .description("cool item").available(true).build();
 
 
     @Test
     void saveNewItem() throws Exception {
-        itemDtoOut.setId(null);
-        when(itemService.createItem(any(), anyLong())).thenReturn(ItemMapper.fromItemDto(itemDtoOut));
+        itemDto.setId(null);
+        when(itemService.createItem(any(), anyLong())).thenReturn(ItemMapper.fromItemDto(itemDto));
 
         mvc.perform(post("/items")
-                        .content(mapper.writeValueAsString(itemDtoOut))
+                        .content(mapper.writeValueAsString(itemDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", 1L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().json(mapper.writeValueAsString(itemDtoOut)))
-                .andExpect(jsonPath("$.id", is(itemDtoOut.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(itemDtoOut.getName()), String.class))
-                .andExpect(jsonPath("$.description", is(itemDtoOut.getDescription()), String.class))
-                .andExpect(jsonPath("$.available", is(itemDtoOut.getAvailable()), Boolean.class));
+                .andExpect(content().json(mapper.writeValueAsString(itemDto)))
+                .andExpect(jsonPath("$.id", is(itemDto.getId()), Long.class))
+                .andExpect(jsonPath("$.name", is(itemDto.getName()), String.class))
+                .andExpect(jsonPath("$.description", is(itemDto.getDescription()), String.class))
+                .andExpect(jsonPath("$.available", is(itemDto.getAvailable()), Boolean.class));
     }
 
     @Test
     void saveNewItem_whenBlankName_thenThrownException() throws Exception {
         mvc.perform(post("/items")
-                        .content(mapper.writeValueAsString(itemBlankName))
+                        .content(mapper.writeValueAsString(itemDtoBlankName))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", 1L)
@@ -82,17 +81,17 @@ class ItemControllerTest {
         when(itemService.updateItemById(any(), anyLong(), anyLong())).thenReturn(item);
 
         mvc.perform(patch("/items/1")
-                        .content(mapper.writeValueAsString(itemDtoOut))
+                        .content(mapper.writeValueAsString(itemDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", 1L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().json(mapper.writeValueAsString(itemDtoOut)))
-                .andExpect(jsonPath("$.id", is(itemDtoOut.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(itemDtoOut.getName()), String.class))
-                .andExpect(jsonPath("$.description", is(itemDtoOut.getDescription()), String.class))
-                .andExpect(jsonPath("$.available", is(itemDtoOut.getAvailable()), Boolean.class));
+                .andExpect(content().json(mapper.writeValueAsString(itemDto)))
+                .andExpect(jsonPath("$.id", is(itemDto.getId()), Long.class))
+                .andExpect(jsonPath("$.name", is(itemDto.getName()), String.class))
+                .andExpect(jsonPath("$.description", is(itemDto.getDescription()), String.class))
+                .andExpect(jsonPath("$.available", is(itemDto.getAvailable()), Boolean.class));
     }
 
     @Test
@@ -100,16 +99,16 @@ class ItemControllerTest {
         when(itemService.getItemById(anyLong(), anyLong())).thenReturn(item);
 
         mvc.perform(get("/items/1")
-                        .content(mapper.writeValueAsString(itemDtoOut))
+                        .content(mapper.writeValueAsString(itemDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", 1L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(itemDtoOut.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(itemDtoOut.getName())))
-                .andExpect(jsonPath("$.description", is(itemDtoOut.getDescription())))
-                .andExpect(jsonPath("$.available", is(itemDtoOut.getAvailable())));
+                .andExpect(jsonPath("$.id", is(itemDto.getId()), Long.class))
+                .andExpect(jsonPath("$.name", is(itemDto.getName())))
+                .andExpect(jsonPath("$.description", is(itemDto.getDescription())))
+                .andExpect(jsonPath("$.available", is(itemDto.getAvailable())));
     }
 
     @Test
@@ -121,7 +120,6 @@ class ItemControllerTest {
                         .header("X-Sharer-User-Id", 1L)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
-        //.andExpect(content().json(mapper.writeValueAsString(List.of(ItemMapper.toItemDto(item)))));
     }
 
     @Test
@@ -152,7 +150,6 @@ class ItemControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", 1L))
                 .andExpect(status().isOk())
-                //.andExpect(content().json(mapper.writeValueAsString(commentDtoOut)))
                 .andExpect(jsonPath("$.id", is(commentDtoOut.getId()), Long.class))
                 .andExpect(jsonPath("$.text", is(commentDtoOut.getText())))
                 .andExpect(jsonPath("$.authorName", is(commentDtoOut.getAuthor().getName())));

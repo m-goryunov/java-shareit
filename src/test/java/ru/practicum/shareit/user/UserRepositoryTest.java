@@ -17,7 +17,7 @@ class UserRepositoryTest {
     @Autowired
     private UserRepository userRepository;
 
-    private final User user = new User(null, "user", "user@mail.ru");
+    private final User user = User.builder().name("user").email("user@mail.ru").build();
 
     @Test
     @DirtiesContext

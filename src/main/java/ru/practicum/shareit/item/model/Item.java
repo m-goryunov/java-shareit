@@ -10,7 +10,6 @@ import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Entity
@@ -46,19 +45,6 @@ public class Item {
     @JoinColumn(name = "request_id", referencedColumnName = "id")
     @Cascade(org.hibernate.annotations.CascadeType.ALL)
     private ItemRequest request;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Item item = (Item) o;
-        return Objects.equals(id, item.id) && Objects.equals(name, item.name) && Objects.equals(description, item.description) && Objects.equals(available, item.available) && Objects.equals(owner, item.owner);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, description, available, owner);
-    }
 
     @Nullable
     public Optional<Booking> getLastBooking() {

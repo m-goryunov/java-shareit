@@ -29,8 +29,8 @@ class UserServiceTest {
     private UserServiceImpl userService;
 
     private final long id = 1L;
-    private final UserDto userDto = new UserDto(id, "User", "user@mail.ru");
-    private final User user = new User(id, "User", "user@mail.ru");
+
+    private final User user = User.builder().id(id).name("User").email("user@email.ru").build();
 
     @Test
     void getAllUsers() {

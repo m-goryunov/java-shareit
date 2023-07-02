@@ -12,6 +12,7 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.repository.BookingRepository;
 import ru.practicum.shareit.booking.util.BookingStatus;
 import ru.practicum.shareit.exception.EntityNotFoundException;
+import ru.practicum.shareit.exception.IncorrectRequestException;
 import ru.practicum.shareit.item.comment.Comment;
 import ru.practicum.shareit.item.comment.CommentRepository;
 import ru.practicum.shareit.item.comment.dto.CommentMapper;
@@ -46,10 +47,12 @@ class ItemServiceTest {
 
     private final long id = 1L;
     private final User user = User.builder().id(id).name("User").email("user@mail.ru").build();
+    private final User notOwner = User.builder().id(2L).name("User2").email("user2@mail.ru").build();
     private final Item itemDtoIn = Item.builder().name("item").description("cool item").available(true).build();
     private final ItemResponseDto itemDtoOut = ItemResponseDto.builder().id(id).name("item").description("cool item").available(true).requestId(0L).build();
     private final Item item = Item.builder().id(1L).name("item").description("cool item").available(true).owner(user).build();
-    private final Comment commentDto = Comment.builder().id(id).text("abc").author(user)
+    private final Item wrongItem = Item.builder().id(2L).name("item2").description("cool item2").available(true).owner(notOwner).build();
+    private final Comment commentDto = Comment.builder().id(id).item(item).text("abc").author(user)
             .created(LocalDateTime.of(2023, 7, 1, 12, 12, 12)).build();
     private final Comment comment = new Comment(id, "abc", item, user,
             LocalDateTime.of(2023, 7, 1, 12, 12, 12));
@@ -93,10 +96,7 @@ class ItemServiceTest {
 
     @Test
     void updateItem_whenUserNotOwner_thenNotUpdatedItem() {
-//        when(userRepository.findById(2L)).thenReturn(Optional.of(notOwner));
-//        when(itemRepository.findById(id)).thenReturn(Optional.of(item));
-
-        Assertions.assertThrows(EntityNotFoundException.class, () -> itemService.updateItemById(itemDtoIn, id, 2L));
+        Assertions.assertThrows(EntityNotFoundException.class, () -> itemService.updateItemById(itemDtoIn, id, notOwner.getId()));
     }
 
     @Test
@@ -168,14 +168,33 @@ class ItemServiceTest {
 
         Comment actualComment = itemService.createComment(Comment.builder().text("abc").build(), id, id);
 
-        Assertions.assertEquals(commentDto, actualComment);
+        Assertions.assertEquals(commentDto.getItem(), actualComment.getItem());
+        Assertions.assertEquals(commentDto.getId(), actualComment.getId());
+        Assertions.assertEquals(commentDto.getText(), actualComment.getText());
+        Assertions.assertEquals(commentDto.getAuthor(), actualComment.getAuthor());
+
+
+    }
+
+    @Test
+    void saveNewComment_whenUserIsWrong_thenThrownException() {
+
+        Assertions.assertThrows(EntityNotFoundException.class, () ->
+                itemService.createComment(Comment.builder().text("abc").build(), id, 2L));
+    }
+
+    @Test
+    void saveNewComment_whenWrongItem_thenThrownException() {
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        Assertions.assertThrows(EntityNotFoundException.class, () ->
+                itemService.createComment(Comment.builder().text("abc").build(), id, wrongItem.getId()));
     }
 
     @Test
     void saveNewComment_whenUserWasNotBooker_thenThrownException() {
-/*        when((bookingRepository).existsAllByItemIdAndEndIsBeforeAndBooker_IdEquals(2L, LocalDateTime.now(),1L))
-                .thenReturn(false);*/
-        Assertions.assertThrows(EntityNotFoundException.class, () ->
-                itemService.createComment(Comment.builder().text("abc").build(), id, 2L));
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        when(itemRepository.findById(id)).thenReturn(Optional.of(item));
+        Assertions.assertThrows(IncorrectRequestException.class, () ->
+                itemService.createComment(Comment.builder().text("abc").build(), id, item.getId()));
     }
 }

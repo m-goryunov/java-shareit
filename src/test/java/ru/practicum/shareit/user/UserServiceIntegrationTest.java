@@ -24,16 +24,17 @@ import static org.hamcrest.Matchers.equalTo;
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class UserServiceIntegrationTest {
 
-    private final EntityManager em;
+    private final EntityManager entityManager;
     private final UserService userService;
 
     @Test
     void saveNewUser() {
-        UserDto userDto = new UserDto(1L, "User", "user@mail.ru");
+
+        UserDto userDto = UserDto.builder().id(1L).name("User").email("user@email.ru").build();
 
         userService.createUser(UserMapper.fromUserDto(userDto));
 
-        TypedQuery<User> query = em.createQuery("Select u from User u where u.name like :nameUser", User.class);
+        TypedQuery<User> query = entityManager.createQuery("Select u from User u where u.name like :nameUser", User.class);
         User user = query.setParameter("nameUser", userDto.getName()).getSingleResult();
 
         assertThat(user.getId(), notNullValue());

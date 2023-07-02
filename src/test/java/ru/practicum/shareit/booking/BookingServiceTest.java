@@ -138,8 +138,6 @@ class BookingServiceTest {
     @Test
     void approve() {
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
-        //when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        //when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         Booking actualBooking = bookingService.acceptOrRejectBooking(1L, 1L, true);
 
@@ -149,7 +147,6 @@ class BookingServiceTest {
 
     @Test
     void approve_whenBookingNotFound_thenThrownException() {
-        //when((bookingRepository).findById(2L)).thenReturn(Optional.empty());
 
         Assertions.assertThrows(EntityNotFoundException.class, () ->
                 bookingService.acceptOrRejectBooking(2L, 1L, true));
@@ -176,8 +173,6 @@ class BookingServiceTest {
 
     @Test
     void getBookingById_whenUserIsNotAuthorOrOwner_thenThrownException() {
-        //when(bookingRepository.findById(4L)).thenReturn(Optional.of(booking));
-        //when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
         Assertions.assertThrows(EntityNotFoundException.class, () ->
                 bookingService.getBookingById(2L));

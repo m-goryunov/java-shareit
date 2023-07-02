@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.equalTo;
         webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class ItemServiceIntegrationTest {
 
-    private final EntityManager em;
+    private final EntityManager entityManager;
     private final ItemService itemService;
     private final UserService userService;
 
@@ -37,7 +37,7 @@ class ItemServiceIntegrationTest {
         User user = userService.createUser(userDto);
         itemService.createItem(itemDtoIn, user.getId());
 
-        TypedQuery<Item> queryItem = em.createQuery("Select i from Item i where i.name like :item", Item.class);
+        TypedQuery<Item> queryItem = entityManager.createQuery("Select i from Item i where i.name like :item", Item.class);
         Item item = queryItem.setParameter("item", itemDtoIn.getName()).getSingleResult();
 
         assertThat(item.getId(), notNullValue());
