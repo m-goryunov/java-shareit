@@ -11,16 +11,11 @@ import java.util.List;
 @Builder
 public class ItemResponseDto {
     private Long id;
-
     private String name;
-
     private String description;
-
     private Boolean available;
-
     private BookingDto lastBooking;
-
     private BookingDto nextBooking;
-
     private List<CommentResponseDto> comments;
+    private Long requestId;
 }

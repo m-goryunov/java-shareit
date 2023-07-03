@@ -1,6 +1,8 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,7 +94,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Booking> getAllBookingsByUserAndState(Long userId, String state) {
+    public List<Booking> getAllBookingsByUserAndState(Long userId, String state, Integer from, Integer size) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
 
@@ -100,7 +102,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() ->
                         new IncorrectRequestException(String.format("Unknown state: " + state), getClass().toString()));
 
-        Sort sortBy = Sort.by(Sort.Direction.DESC, "start");
+        Pageable pageable = getPageable(from, size);
 
         List<Booking> result = List.of();
 
@@ -108,28 +110,27 @@ public class BookingServiceImpl implements BookingService {
 
         switch (bookingState) {
             case ALL:
-                result = bookingRepository.findAllByBookerId(userId, sortBy);
+                result = bookingRepository.findAllByBookerId(userId, pageable);
                 break;
 
             case CURRENT:
-                result = bookingRepository.findAllByBookerIdAndStartIsBeforeAndEndIsAfter(userId,
-                        now, now, sortBy);
+                result = bookingRepository.findAllByBookerIdAndStartIsBeforeAndEndIsAfter(userId, now, now, pageable);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByBookerIdAndEndIsBefore(userId, now, sortBy);
+                result = bookingRepository.findAllByBookerIdAndEndIsBefore(userId, now, pageable);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByBookerIdAndStartIsAfter(userId, now, sortBy);
+                result = bookingRepository.findAllByBookerIdAndStartIsAfter(userId, now, pageable);
                 break;
 
             case WAITING:
-                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.WAITING, sortBy);
+                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.WAITING, pageable);
                 break;
 
             case REJECTED:
-                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.REJECTED, sortBy);
+                result = bookingRepository.findAllByBookerIdAndStatus(userId, BookingStatus.REJECTED, pageable);
                 break;
         }
         return result;
@@ -137,7 +138,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Booking> getAllOwnedItemBookingsByState(Long ownerId, String state) {
+    public List<Booking> getAllOwnedItemBookingsByState(Long ownerId, String state, Integer from, Integer size) {
         userRepository.findById(ownerId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден.", getClass().toString()));
 
@@ -145,7 +146,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new IncorrectRequestException(String.format("Unknown state: " + state),
                         getClass().toString()));
 
-        Sort sortBy = Sort.by(Sort.Direction.DESC, "start");
+        Pageable pageable = getPageable(from, size);
 
         List<Booking> result = List.of();
 
@@ -153,28 +154,28 @@ public class BookingServiceImpl implements BookingService {
 
         switch (bookingState) {
             case ALL:
-                result = bookingRepository.findAllByItemOwnerId(ownerId, sortBy);
+                result = bookingRepository.findAllByItemOwnerId(ownerId, pageable);
                 break;
 
             case CURRENT:
                 result = bookingRepository.findAllByItemOwnerIdAndStartIsBeforeAndEndIsAfter(ownerId,
-                        now, now, sortBy);
+                        now, now, pageable);
                 break;
 
             case PAST:
-                result = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, now, sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndEndIsBefore(ownerId, now, pageable);
                 break;
 
             case FUTURE:
-                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, now, sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(ownerId, now, pageable);
                 break;
 
             case WAITING:
-                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.WAITING, sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.WAITING, pageable);
                 break;
 
             case REJECTED:
-                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.REJECTED, sortBy);
+                result = bookingRepository.findAllByItemOwnerIdAndStatus(ownerId, BookingStatus.REJECTED, pageable);
                 break;
         }
         return result;
@@ -185,5 +186,14 @@ public class BookingServiceImpl implements BookingService {
         if (!start.isBefore(end) || start.equals(end)) {
             throw new IncorrectRequestException("Некорректно указаны дата начала и/или окончания", getClass().toString());
         }
+    }
+
+    private Pageable getPageable(Integer from, Integer size) {
+        if (from < 0 || size <= 0) {
+            throw new IncorrectRequestException("Переданные from/size невалидны.", getClass().getName());
+        }
+
+        int page = from == 0 ? 0 : (from / size);
+        return PageRequest.of(page, size, Sort.by("start").descending());
     }
 }

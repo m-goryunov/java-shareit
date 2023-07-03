@@ -1,15 +1,15 @@
 package ru.practicum.shareit.item.model;
 
 import lombok.*;
+import org.hibernate.annotations.Cascade;
 import org.springframework.lang.Nullable;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.comment.Comment;
-import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Entity
@@ -33,9 +33,6 @@ public class Item {
     @JoinColumn(name = "OWNER_ID")
     private User owner;
     @Transient
-    @JoinColumn(name = "REQUEST_ID", referencedColumnName = "ID")
-    private ItemRequest request;
-    @Transient
     @Nullable
     private Booking lastBooking;
     @Transient
@@ -44,19 +41,10 @@ public class Item {
     @Transient
     @Nullable
     private List<Comment> comments;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Item item = (Item) o;
-        return Objects.equals(id, item.id) && Objects.equals(name, item.name) && Objects.equals(description, item.description) && Objects.equals(available, item.available) && Objects.equals(owner, item.owner);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, description, available, owner);
-    }
+    @ManyToOne(targetEntity = ItemRequest.class, fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id", referencedColumnName = "id")
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
+    private ItemRequest request;
 
     @Nullable
     public Optional<Booking> getLastBooking() {
