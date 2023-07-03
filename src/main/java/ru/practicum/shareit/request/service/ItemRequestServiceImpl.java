@@ -18,6 +18,10 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -78,9 +82,15 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     private List<ItemRequest> addItems(List<ItemRequest> requests) {
-        final List<ItemRequest> result = new ArrayList<>();
+
+        Map<ItemRequest, List<Item>> requestWithItems = itemRepository
+                .findByRequestIn(requests)
+                .stream()
+                .collect(groupingBy(Item::getRequest, toList()));
+
+        List<ItemRequest> result = new ArrayList<>();
         for (ItemRequest request : requests) {
-            List<Item> items = new ArrayList<>(itemRepository.findAllByRequestId(request.getId()));
+            List<Item> items = new ArrayList<>(requestWithItems.getOrDefault(request, List.of()));
             request.setItems(items);
             result.add(request);
         }

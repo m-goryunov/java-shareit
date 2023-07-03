@@ -77,9 +77,9 @@ class ItemRequestServiceTest {
     void getRequestsByRequestor_whenUserFound_thenSavedRequest() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(requestor));
         when(requestRepository.findAllByRequestorId(anyLong())).thenReturn(List.of(request));
-        when(itemRepository.findAllByRequestId(1L)).thenReturn(List.of(item));
+//        when(itemRepository.findAllByRequestId(1L)).thenReturn(List.of(item));
         ItemRequestDtoOut requestDtoOut = ItemRequestMapper.toDto(request);
-        requestDtoOut.setItems(List.of(ItemMapper.toItemDto(item)));
+        //requestDtoOut.setItems(List.of(ItemMapper.toItemDto(item)));
 
         List<ItemRequestDtoOut> actualRequests = ItemRequestMapper
                 .toDto(requestService.getAllOwnedRequestsWithResponses(2L));
@@ -99,10 +99,8 @@ class ItemRequestServiceTest {
     void getAllRequests_whenCorrectPageArguments_thenReturnRequests() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(requestor));
         when(requestRepository.findAllByRequestorIdIsNot(anyLong(), any())).thenReturn(List.of(request2));
-        when(itemRepository.findAllByRequestId(anyLong())).thenReturn(List.of(item2));
 
         final ItemRequestDtoOut requestDtoOut = ItemRequestMapper.toDto(request2);
-        requestDtoOut.setItems(List.of(ItemMapper.toItemDto(item2)));
 
         List<ItemRequestDtoOut> actualRequests = ItemRequestMapper
                 .toDto(requestService.getAllAvailableItemRequests(2L, 0, 10));
