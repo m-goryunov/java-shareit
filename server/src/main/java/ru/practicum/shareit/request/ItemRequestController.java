@@ -9,10 +9,6 @@ import ru.practicum.shareit.request.dto.ItemRequestDtoOut;
 import ru.practicum.shareit.request.dto.ItemRequestMapper;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.service.ItemRequestService;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -26,7 +22,7 @@ public class ItemRequestController {
 
     @PostMapping
     public ItemRequestDtoOut createItemRequest(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
-                                               @Valid @RequestBody ItemRequestDtoIn itemRequestDtoIn) {
+                                               @RequestBody ItemRequestDtoIn itemRequestDtoIn) {
         log.info("Запрос создания запроса вещи {} у пользователя {}", itemRequestDtoIn.getId(), userId);
         ItemRequest itemRequest = ItemRequestMapper.fromDto(itemRequestDtoIn);
         return ItemRequestMapper.toDto(itemRequestService.createItemRequest(itemRequest, userId));
@@ -48,9 +44,9 @@ public class ItemRequestController {
     @GetMapping("/all")
     public List<ItemRequestDtoOut> getAllAvailableItemRequests(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
                                                                @RequestParam(name = "from", defaultValue = "0")
-                                                               @PositiveOrZero Integer from,
+                                                               Integer from,
                                                                @RequestParam(name = "size", defaultValue = "10")
-                                                               @Positive Integer size) {
+                                                               Integer size) {
         log.info("Запрос заявок всех заявок на вещи, кроме своих {}", userId);
         return ItemRequestMapper.toDto(itemRequestService.getAllAvailableItemRequests(userId, from, size));
     }
