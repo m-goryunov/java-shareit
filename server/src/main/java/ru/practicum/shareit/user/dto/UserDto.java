@@ -4,8 +4,6 @@ import lombok.*;
 import ru.practicum.shareit.util.Create;
 import ru.practicum.shareit.util.Update;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotEmpty;
 
 @Getter
 @Setter
@@ -14,6 +12,7 @@ import javax.validation.constraints.NotEmpty;
 @NoArgsConstructor
 public class UserDto {
     private Long id;
+    @NotBlank
     private String name;
     @Email(groups = {Create.class, Update.class}, regexp = "[\\w._]{1,10}@[\\w]{2,}.[\\w]{2,}")
     @NotEmpty(groups = Create.class)
