@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,12 +78,12 @@ class UserServiceTest {
         Assertions.assertThrows(DataIntegrityViolationException.class, () -> userService.createUser(user));
     }
 
-/*    @Test
+    @Test
     void saveNewUser_whenInvalidEmail_thenNotSavedUser() {
         doThrow(ConstraintViolationException.class).when(userRepository).save(any(User.class));
 
         Assertions.assertThrows(ConstraintViolationException.class, () -> userService.createUser(user));
-    }*/
+    }
 
     @Test
     void updateUser_whenUserFound_thenUpdatedOnlyAvailableFields() {

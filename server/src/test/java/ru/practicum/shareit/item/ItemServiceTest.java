@@ -127,14 +127,14 @@ class ItemServiceTest {
     @Test
     void getItemsByOwner_CorrectArgumentsForPaging_thenReturnItems() {
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
-        when(itemRepository.findAllByOwnerId(anyLong(), any())).thenReturn(List.of(item));
+        when(itemRepository.findAllByOwnerIdOrderByIdAsc(anyLong(), any())).thenReturn(List.of(item));
 
         List<ItemResponseDto> targetItems = ItemMapper.toItemDto(itemService.getAllItemsByUserId(id, 0, 10));
 
         Assertions.assertNotNull(targetItems);
         Assertions.assertEquals(1, targetItems.size());
         verify(itemRepository, times(1))
-                .findAllByOwnerId(anyLong(), any());
+                .findAllByOwnerIdOrderByIdAsc(anyLong(), any());
     }
 
     @Test

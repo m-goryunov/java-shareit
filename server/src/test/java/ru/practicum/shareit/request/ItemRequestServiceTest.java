@@ -57,10 +57,6 @@ class ItemRequestServiceTest {
     private final Item item = Item.builder().name("item").description("cool").available(true).owner(user)
             .request(request)
             .build();
-    private final Item item2 = Item.builder().name("i2").description("2").available(true).owner(requestor)
-            .request(request2)
-            .build();
-
 
     @Test
     void saveNewRequest() {
@@ -77,9 +73,7 @@ class ItemRequestServiceTest {
     void getRequestsByRequestor_whenUserFound_thenSavedRequest() {
         when(userRepository.findById(2L)).thenReturn(Optional.of(requestor));
         when(requestRepository.findAllByRequestorId(anyLong())).thenReturn(List.of(request));
-//        when(itemRepository.findAllByRequestId(1L)).thenReturn(List.of(item));
         ItemRequestDtoOut requestDtoOut = ItemRequestMapper.toDto(request);
-        //requestDtoOut.setItems(List.of(ItemMapper.toItemDto(item)));
 
         List<ItemRequestDtoOut> actualRequests = ItemRequestMapper
                 .toDto(requestService.getAllOwnedRequestsWithResponses(2L));

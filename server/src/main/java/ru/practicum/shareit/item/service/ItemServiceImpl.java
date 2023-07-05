@@ -119,7 +119,7 @@ public class ItemServiceImpl implements ItemService {
 
         Pageable pageable = getPageable(from, size);
 
-        return setAllLastAndNextBookingAndComments(itemRepository.findAllByOwnerId(userId, pageable), pageable);
+        return setAllLastAndNextBookingAndComments(itemRepository.findAllByOwnerIdOrderByIdAsc(userId, pageable), pageable);
     }
 
     private List<Item> setAllLastAndNextBookingAndComments(List<Item> items, Pageable pageable) {
@@ -198,9 +198,6 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private Pageable getPageable(Integer from, Integer size) {
-        if (from < 0 || size <= 0) {
-            throw new IncorrectRequestException("Переданные from/size невалидны.", getClass().getName());
-        }
 
         int page = from == 0 ? 0 : (from / size);
         return PageRequest.of(page, size);

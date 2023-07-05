@@ -189,9 +189,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private Pageable getPageable(Integer from, Integer size) {
-        if (from < 0 || size <= 0) {
-            throw new IncorrectRequestException("Переданные from/size невалидны.", getClass().getName());
-        }
 
         int page = from == 0 ? 0 : (from / size);
         return PageRequest.of(page, size, Sort.by("start").descending());

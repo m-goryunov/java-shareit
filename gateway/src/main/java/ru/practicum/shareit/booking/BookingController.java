@@ -7,7 +7,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
@@ -20,15 +19,9 @@ public class BookingController {
     private final BookingClient bookingClient;
 
     @PostMapping
-    public ResponseEntity<Object> createBooking(@RequestHeader("X-Sharer-User-Id") long userId,
-                                                @RequestBody @Valid BookingRequestDto requestDto) {
+    public ResponseEntity<Object> createBooking(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                                @RequestBody @Validated BookingRequestDto requestDto) {
         log.info("Creating booking {}, userId={}", requestDto, userId);
-
-        /*if (!bookingDto.getEnd().isAfter(bookingDto.getStart()) ||
-                bookingDto.getStart().isBefore(LocalDateTime.now())) {
-            throw***
-        }*/
-
         return bookingClient.createBooking(requestDto, userId);
     }
 
@@ -36,7 +29,7 @@ public class BookingController {
     public ResponseEntity<Object> acceptOrRejectBooking(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
                                                         @PathVariable Long bookingId,
                                                         @RequestParam(name = "approved") Boolean approved) {
-        return bookingClient.acceptOrRejectBooking(userId, approved, bookingId);
+        return bookingClient.acceptOrRejectBooking(bookingId, approved, userId);
     }
 
 
