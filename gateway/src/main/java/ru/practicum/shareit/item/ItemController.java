@@ -51,8 +51,8 @@ public class ItemController {
 
     @GetMapping("/search")
     public ResponseEntity<Object> searchItem(@RequestParam(name = "text") String text,
-                                             @RequestParam(name = "from", defaultValue = "0") Integer from,
-                                             @RequestParam(name = "size", defaultValue = "10") Integer size) {
+                                             @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero Integer from,
+                                             @RequestParam(name = "size", defaultValue = "10") @Positive Integer size) {
         log.info("Запрос поиска вещи по тексту: {}", text);
         if (text.isBlank()) {
             return ResponseEntity.ok(List.of());
