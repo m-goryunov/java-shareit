@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
+import java.util.List;
 
 @Controller
 @RequestMapping("/items")
@@ -54,7 +55,7 @@ public class ItemController {
                                              @RequestParam(name = "size", defaultValue = "10") Integer size) {
         log.info("Запрос поиска вещи по тексту: {}", text);
         if (text.isBlank()) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(List.of());
         }
         return itemClient.searchItem(from, size, text);
     }
