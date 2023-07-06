@@ -3,13 +3,14 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
-@RestController
+@Controller
 @RequestMapping("/items")
 @RequiredArgsConstructor
 @Slf4j
@@ -52,6 +53,9 @@ public class ItemController {
                                              @RequestParam(name = "from", defaultValue = "0") Integer from,
                                              @RequestParam(name = "size", defaultValue = "10") Integer size) {
         log.info("Запрос поиска вещи по тексту: {}", text);
+        if (text.isBlank()) {
+            return ResponseEntity.noContent().build();
+        }
         return itemClient.searchItem(from, size, text);
     }
 

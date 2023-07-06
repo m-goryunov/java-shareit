@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
@@ -14,13 +15,12 @@ import javax.validation.constraints.PositiveOrZero;
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
 @Slf4j
-@Validated
 public class BookingController {
     private final BookingClient bookingClient;
 
     @PostMapping
     public ResponseEntity<Object> createBooking(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                @RequestBody @Validated BookingRequestDto requestDto) {
+                                                @RequestBody @Valid BookingRequestDto requestDto) {
         log.info("Creating booking {}, userId={}", requestDto, userId);
         return bookingClient.createBooking(requestDto, userId);
     }
